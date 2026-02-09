@@ -58,6 +58,15 @@ uniform sampler2D colortex11; // clouds history
 uniform sampler2D colortex12; // clouds data
 uniform sampler2D colortex14; // ambient lighting history data
 
+#if defined PHOTONICS && defined PHOTONICS_ENABLED
+#define USE_RT
+
+uniform sampler2D radiosity_indirect;
+uniform sampler2D radiosity_direct;
+uniform sampler2D radiosity_direct_soft;
+uniform sampler2D radiosity_handheld;
+#endif
+
 #ifndef USE_SEPARATE_ENTITY_DRAWS
 uniform sampler2D colortex3; // OF damage overlay, armor glint
 #endif

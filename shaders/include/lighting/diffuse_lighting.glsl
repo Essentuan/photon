@@ -164,8 +164,24 @@ vec3 get_diffuse_lighting(
         lift(max0(NoL), 0.25 * rcp(SHADING_STRENGTH)) *
         (1.0 - 0.5 * material.sss_amount)
     );
-    vec3 bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y)) *
+
+    vec3 bounced;
+
+#if defined USE_RT && defined PHOTONICS_ENABLED && defined WORLD_OVERWORLD
+    vec4 gi_color_full = texture2D(radiosity_indirect, uv);
+    vec3 gi_color = gi_color_full.xyz;
+
+    if (gi_color_full.a != 0f) {
+        bounced = gi_color * (0.4f * BOUNCED_LIGHT_I) - 0.01;
+    } else {
+#endif
+    bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y)) *
         pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I;
+#if defined USE_RT && defined PHOTONICS_ENABLED && defined WORLD_OVERWORLD
+   }
+#endif
+
+
     vec3 sss =
         sss_approx(
             material.albedo,
@@ -247,10 +263,28 @@ vec3 get_diffuse_lighting(
         mix(skylight, vec3(dot(skylight, luminance_weights_rec2020)), 0.5);
 #endif
 
-    lighting += skylight * get_skylight_falloff(light_levels.y);
+    vec3 skylight_color = skylight * get_skylight_falloff(light_levels.y);
+
+#if defined USE_RT && defined PHOTONICS_ENABLED && defined WORLD_OVERWORLD
+    if (gi_color_full.a != 0f) {
+        skylight_color-= dot(gi_color, luminance_weights_rec709);
+        skylight_color = max(skylight_color, 0f) * 0.4;
+    }
+#endif
+
+    lighting += skylight_color;
 
     // Blocklight
 
+#if defined USE_RT && defined PHOTONICS_ENABLED
+    vec3 ph_direct_hand = texture2D(radiosity_handheld, uv).xyz;
+    vec3 ph_direct = texture2D(radiosity_direct, uv).xyz;
+    vec4 ph_direct_soft = texture2D(radiosity_direct_soft, uv);
+
+    lighting += ph_direct_hand * 3.4 * HANDHELD_LIGHTING_INTENSITY;
+    lighting += ph_direct * 3.4 * BLOCKLIGHT_I;
+    lighting += (ph_direct_soft.xyz / max(ph_direct_soft.w, 1.0f)) * 3.4 * BLOCKLIGHT_I;
+#else
     float blocklight_falloff =
         get_blocklight_falloff(light_levels.x, light_levels.y, ao);
     vec3 mc_blocklight = (blocklight_falloff * directional_lighting) *
@@ -269,6 +303,7 @@ vec3 get_diffuse_lighting(
 
 #ifdef HANDHELD_LIGHTING
     lighting += get_handheld_lighting(scene_pos, ao);
+#endif
 #endif
 
     lighting += material.emission * emission_scale;

@@ -27,6 +27,18 @@ const float wetnessHalflife         = 70.0;
 //   World
 // ---------
 
+#if defined PHOTONICS
+  #define PHOTONICS_ENABLED
+
+#ifdef PHOTONICS_ENABLED
+  #undef COLORED_LIGHTS
+  #undef HANDHELD_LIGHTING
+#endif
+
+  #define MAX_LIGHTS 1000 // [250 500 1000 2000 3000]
+  #define MAX_SAMPLES 20 // [5 10 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100]
+#endif
+
   #define WAVING_PLANTS
   #define WAVING_LEAVES
 //#define EDGE_HIGHLIGHT
@@ -522,7 +534,12 @@ const float wetnessHalflife         = 70.0;
   #define DEBUG_VIEW_WEATHER   3
 
   #define DEBUG_VIEW DEBUG_VIEW_NONE // [DEBUG_VIEW_NONE DEBUG_VIEW_SAMPLER DEBUG_VIEW_HISTOGRAM DEBUG_VIEW_WEATHER]
+
+#if defined PHOTONICS && defined PHOTONICS_ENABLED
+  #define DEBUG_SAMPLER colortex1 // [colortex1 colortex2 colortex3 colortex4 colortex5 colortex6 colortex7 colortex8 colortex9 colortex10 colortex11 colortex12 colortex13 colortex14 colortex15 depthtex0 depthtex1 depthtex2 shadowtex0 shadowtex1 shadowcolor0 shadowcolor1 radiosity_indirect radiosity_direct radiosity_direct_soft radiosity_handheld]
+#else
   #define DEBUG_SAMPLER colortex1 // [colortex1 colortex2 colortex3 colortex4 colortex5 colortex6 colortex7 colortex8 colortex9 colortex10 colortex11 colortex12 colortex13 colortex14 colortex15 depthtex0 depthtex1 depthtex2 shadowtex0 shadowtex1 shadowcolor0 shadowcolor1]
+#endif
 //#define WHITE_WORLD
 //#define TONEMAP_COMPARISON
   #define tonemap_left tonemap_lottes // [tonemap_aces_fit tonemap_aces_full tonemap_lottes tonemap_hejl_burgess tonemap_tech tonemap_uncharted_2 tonemap_ozius tonemap_reinhard tonemap_reinhard_jodie]
