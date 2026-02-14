@@ -324,8 +324,7 @@ void main() {
 
     scene_pos = ray.result_position + world_offset - cameraPosition;
     view_pos = scene_to_view_space(scene_pos);
-
-    vec4 ndc4 = gbufferProjection * vec4(view_pos, 1.0f);
+    scene_pos = view_to_screen_space(gbufferProjection, view_pos, false);
 
     gl_FragDepth = screen_pos.z;
 
