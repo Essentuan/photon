@@ -71,3 +71,18 @@ vec3 indirect_light_color = mix(texelFetch(colortex4, ivec2(191, 1), 0).rgb, vec
 vec3 get_sky_color(ivec2 gBufferLoc, vec3 worldPos, vec3 newNormal) {
     return vec3(1f);
 }
+
+bool is_in_world() {
+    if (texelFetch(depthtex0, ivec2(gl_FragCoord.xy), 0).x > 0.99999f)
+        return false;
+
+#ifdef LOD_MOD_ACTIVE
+    ivec2 texel = ivec2(gl_FragCoord.xy);
+    float depth = texelFetch(depthtex0, texel, 0).x;
+    float depth_lod = texelFetch(lod_depth_tex, texel, 0).x;
+
+    return !is_lod_terrain(depth, depth_lod);
+#endif
+
+    return true;
+}
