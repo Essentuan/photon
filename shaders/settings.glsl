@@ -30,6 +30,10 @@ const float wetnessHalflife         = 70.0;
 #if defined PHOTONICS
   #define PHOTONICS_ENABLED
 
+  //#define PH_TRACING_EYE
+#ifdef PH_TRACING_EYE
+#endif
+
 #ifdef PHOTONICS_ENABLED
   #undef COLORED_LIGHTS
   #undef HANDHELD_LIGHTING

@@ -37,7 +37,7 @@ uniform sampler2D shadowtex0;
 #include "/include/utility/dithering.glsl"
 #include "/include/utility/text_rendering.glsl"
 
-#ifdef DISTANCE_VIEW
+#if defined DISTANCE_VIEW || (defined PHOTONICS_ENABLED && defined PH_TRACING_EYE)
 uniform sampler2D depthtex0;
 
 uniform mat4 gbufferModelView;
@@ -53,6 +53,13 @@ uniform float far;
 
 #include "/include/misc/lod_mod_support.glsl"
 #include "/include/utility/space_conversion.glsl"
+#endif
+
+#if defined PHOTONICS_ENABLED && defined PH_TRACING_EYE
+uniform int frameCounter;
+uniform vec3 cameraPosition;
+
+#include "/photonics/photonics.glsl"
 #endif
 
 const int debug_text_scale = 2;
@@ -124,58 +131,58 @@ vec3 cas_filter(sampler2D sampler, ivec2 texel, const float sharpness) {
 
 void draw_iris_required_error_message() {
     fragment_color = vec3(
-        sqr(sin(uv.xy + vec2(0.4, 0.2) * frameTimeCounter)) * 0.5 + 0.3,
-        1.0
+    sqr(sin(uv.xy + vec2(0.4, 0.2) * frameTimeCounter)) * 0.5 + 0.3,
+    1.0
     );
     begin_text(ivec2(gl_FragCoord.xy) / 3, ivec2(0, viewHeight / 3));
     text.fg_col = vec4(0.0, 0.0, 0.0, 1.0);
     text.bg_col = vec4(0.0);
     print((
-        _I,
-        _r,
-        _i,
-        _s,
-        _space,
-        _i,
-        _s,
-        _space,
-        _r,
-        _e,
-        _q,
-        _u,
-        _i,
-        _r,
-        _e,
-        _d,
-        _space,
-        _f,
-        _o,
-        _r,
-        _space,
-        _f,
-        _e,
-        _a,
-        _t,
-        _u,
-        _r,
-        _e,
-        _space,
-        _quote,
-        _C,
-        _o,
-        _l,
-        _o,
-        _r,
-        _e,
-        _d,
-        _space,
-        _L,
-        _i,
-        _g,
-        _h,
-        _t,
-        _s,
-        _quote
+    _I,
+    _r,
+    _i,
+    _s,
+    _space,
+    _i,
+    _s,
+    _space,
+    _r,
+    _e,
+    _q,
+    _u,
+    _i,
+    _r,
+    _e,
+    _d,
+    _space,
+    _f,
+    _o,
+    _r,
+    _space,
+    _f,
+    _e,
+    _a,
+    _t,
+    _u,
+    _r,
+    _e,
+    _space,
+    _quote,
+    _C,
+    _o,
+    _l,
+    _o,
+    _r,
+    _e,
+    _d,
+    _space,
+    _L,
+    _i,
+    _g,
+    _h,
+    _t,
+    _s,
+    _quote
     ));
     print_line();
     print_line();
@@ -183,91 +190,115 @@ void draw_iris_required_error_message() {
     print((_H, _o, _w, _space, _t, _o, _space, _f, _i, _x, _colon));
     print_line();
     print((
-        _space,
-        _space,
-        _minus,
-        _space,
-        _D,
-        _i,
-        _s,
-        _a,
-        _b,
-        _l,
-        _e,
-        _space,
-        _C,
-        _o,
-        _l,
-        _o,
-        _r,
-        _e,
-        _d,
-        _space,
-        _L,
-        _i,
-        _g,
-        _h,
-        _t,
-        _s,
-        _space,
-        _i,
-        _n,
-        _space,
-        _t,
-        _h,
-        _e,
-        _space,
-        _L,
-        _i,
-        _g,
-        _h,
-        _t,
-        _i,
-        _n,
-        _g,
-        _space,
-        _m,
-        _e,
-        _n,
-        _u
+    _space,
+    _space,
+    _minus,
+    _space,
+    _D,
+    _i,
+    _s,
+    _a,
+    _b,
+    _l,
+    _e,
+    _space,
+    _C,
+    _o,
+    _l,
+    _o,
+    _r,
+    _e,
+    _d,
+    _space,
+    _L,
+    _i,
+    _g,
+    _h,
+    _t,
+    _s,
+    _space,
+    _i,
+    _n,
+    _space,
+    _t,
+    _h,
+    _e,
+    _space,
+    _L,
+    _i,
+    _g,
+    _h,
+    _t,
+    _i,
+    _n,
+    _g,
+    _space,
+    _m,
+    _e,
+    _n,
+    _u
     ));
     print_line();
     print(
-        (_space,
-         _space,
-         _minus,
-         _space,
-         _I,
-         _n,
-         _s,
-         _t,
-         _a,
-         _l,
-         _l,
-         _space,
-         _I,
-         _r,
-         _i,
-         _s,
-         _space,
-         _1,
-         _dot,
-         _6,
-         _space,
-         _o,
-         _r,
-         _space,
-         _a,
-         _b,
-         _o,
-         _v,
-         _e)
+    (_space,
+    _space,
+    _minus,
+    _space,
+    _I,
+    _n,
+    _s,
+    _t,
+    _a,
+    _l,
+    _l,
+    _space,
+    _I,
+    _r,
+    _i,
+    _s,
+    _space,
+    _1,
+    _dot,
+    _6,
+    _space,
+    _o,
+    _r,
+    _space,
+    _a,
+    _b,
+    _o,
+    _v,
+    _e)
     );
     print_line();
     end_text(fragment_color);
 }
 
 void main() {
+#if defined PHOTONICS_ENABLED && defined PH_TRACING_EYE
+    ivec2 texel = ivec2(gl_FragCoord.xy);
+
+    float depth = texelFetch(depthtex0, texel, 0).x;
+
+    vec3 position_screen = vec3(uv, depth);
+    vec3 position_view = screen_to_view_space(gbufferProjectionInverse, position_screen, true);
+    vec3 position_scene = view_to_scene_space(position_view);
+
+    vec3 direction_world = normalize(position_scene - gbufferModelViewInverse[3].xyz);
+
+    RayJob ray = RayJob(
+        cameraPosition - world_offset, // Ray origin
+        direction_world, // Ray direction
+        vec3(0), vec3(0), vec3(0), false
+    );
+
+    trace_ray(ray);
+
+    if (ray.result_hit)
+        fragment_color = ray.result_color;
+    else
+        fragment_color = vec3(1f);
+#else
 #if defined COLORED_LIGHTS && !defined IS_IRIS
     draw_iris_required_error_message();
     return;
@@ -335,6 +366,7 @@ void main() {
     if (uv.x < 0.0) {
         fragment_color = texture(shadowtex0, uv).rgb;
     }
+#endif
 #endif
 }
 

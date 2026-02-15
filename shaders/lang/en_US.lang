@@ -83,6 +83,8 @@ option.MAX_LIGHTS.comment              = The max number of traced lights that ca
 option.MAX_SAMPLES                     = §e♦ §rMax Light Sample Count
 option.MAX_SAMPLES.comment             = The amount of nearby lights that can cast light on an object\n\n§aRequires Photonics\n§cHIGH PERFORMANCE IMPACT
 
+option.PH_TRACING_EYE                  = §e♦ §rTracing Eye
+
 
 option.WAVING_PLANTS                   = Waving Plants
 option.WAVING_PLANTS.comment           = Ground plants wave in the wind.\n\nTo add a block to the list of waving plants, open shaders/block.properties and add it to the relevant category (10016, 10017 or 10018)
