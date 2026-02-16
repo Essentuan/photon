@@ -41,6 +41,7 @@ const float wetnessHalflife         = 70.0;
 
   #define MAX_LIGHTS 1000 // [250 500 1000 2000 3000]
   #define MAX_SAMPLES 20 // [5 10 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100]
+  #define ALPHA_MODE NONE // [NONE BLOCK VOXEL]
 #endif
 
   #define WAVING_PLANTS

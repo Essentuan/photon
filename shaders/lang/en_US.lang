@@ -83,6 +83,13 @@ option.MAX_LIGHTS.comment              = The max number of traced lights that ca
 option.MAX_SAMPLES                     = §e♦ §rMax Light Sample Count
 option.MAX_SAMPLES.comment             = The amount of nearby lights that can cast light on an object\n\n§aRequires Photonics\n§cHIGH PERFORMANCE IMPACT
 
+option.ALPHA_MODE = §e♦ §rAlpha Mode
+value.ALPHA_MODE.NONE = None
+value.ALPHA_MODE.BLOCK = Block
+value.ALPHA_MODE.VOXEL = Voxel
+
+option.ALPHA_MODE.comment = Sets how Photonics handles transparent blocks.\n\nNone - Transparent blocks are treated as opaque\nBlock - Transparency is applied per block (Minimal performance impact)\nVoxel - Transparency is applied per voxel (Heavy performance impact)
+
 option.PH_TRACING_EYE                  = §e♦ §rTracing Eye
 
 
