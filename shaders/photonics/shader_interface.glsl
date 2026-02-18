@@ -4,6 +4,7 @@ uniform sampler2D colortex1; // albedo, flat_normal
 uniform sampler2D colortex2; // detailed_normal
 uniform sampler2D colortex4; // sky
 uniform sampler2D depthtex1; // depth no transulscents
+uniform sampler2D depthtex2; // depth no transulscents
 
 uniform vec3 sun_dir;
 uniform float near;
@@ -22,9 +23,15 @@ uniform vec2 view_pixel_size;
 
 #define load_tex_coord gl_FragCoord.xy * view_pixel_size
 
+#ifdef NORMAL_MAPPING
+#define pos_depth depthtex1
+#else
+#define pos_depth depthtex0
+#endif
+
 vec3 load_world_position() {
     vec2 tex_coord = load_tex_coord;
-    vec3 screen_pos = vec3(tex_coord.xy * rcp(taau_render_scale), texture(depthtex1, tex_coord).r);
+    vec3 screen_pos = vec3(tex_coord.xy * rcp(taau_render_scale), texture(pos_depth, tex_coord).r);
 
     vec3 view_pos = screen_to_view_space(screen_pos, true);
     vec3 scene_pos = view_to_scene_space(view_pos);
@@ -74,5 +81,5 @@ vec3 get_sky_color(ivec2 gBufferLoc, vec3 worldPos, vec3 newNormal) {
 }
 
 bool is_in_world() {
-    return texelFetch(depthtex1, ivec2(gl_FragCoord.xy), 0).x <= 0.99999f;
+    return texelFetch(depthtex0, ivec2(gl_FragCoord.xy), 0).x <= 0.99999f;
 }
