@@ -438,6 +438,8 @@ const float wetnessHalflife         = 70.0;
   #ifdef WSR_WATER_REFLECTIONS
   #endif
 
+  #define WSR_RAY_ITERATIONS 20 // [ 5 15 20 30 40 50 60 70 80 90 100]
+
 
   #define SKY_REFLECTIONS
   #define SSR_ROUGHNESS_SUPPORT

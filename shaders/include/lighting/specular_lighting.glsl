@@ -16,7 +16,6 @@
 #endif
 
 #if defined WORLD_SPACE_REFLECTIONS && defined USE_RT && defined ENVIRONMENT_REFLECTIONS
-#define WSR_ITERATIONS 20
 
 #PH_USE_CUSTOM_ALPHA
 #PH_ALPHA_FUNC(color) apply_tint_impl(color)
@@ -234,7 +233,7 @@ vec3 trace_specular_ray(
         vec3(0), vec3(0), vec3(0), false
     );
 
-    RAY_ITERATION_COUNT = WSR_ITERATIONS;
+    RAY_ITERATION_COUNT = WSR_RAY_ITERATIONS;
     trace_ray(ray, true);
 
     const vec3 hit_pos = vec3(0.0);

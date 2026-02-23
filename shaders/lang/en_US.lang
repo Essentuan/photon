@@ -99,6 +99,8 @@ value.ENVIRONMENT_REFLECTIONS_MODE.2   = World Space
 option.WSR_WATER_REFLECTIONS           = §e♦ §rWater World Space Reflections
 option.WSR_WATER_REFLECTIONS.comment   = Changes wether water uses world space reflections. \ n\n§aRequires Photonics\n§cWorld space reflections will not reflect LOD chunks.
 
+option.WSR_RAY_ITERATIONS              = §e♦ §rWSR Ray Iterations
+
 option.PH_TRACING_EYE                  = §e♦ §rTracing Eye
 
 
