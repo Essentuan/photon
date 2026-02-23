@@ -157,8 +157,23 @@ vec3 light_color, ambient_color;
 #define NO_NORMAL
 #endif
 
+#ifndef WSR_WATER_REFLECTIONS
+#undef WORLD_SPACE_REFLECTIONS
+#endif
+
+#ifdef PROGRAM_GBUFFERS_WATER && defined PHOTONICS && defined PHOTONICS_ENABLED && defined WORLD_SPACE_REFLECTIONS && defined WSR_WATER_REFLECTIONS
+#define USE_RT
+
+uniform sampler2D radiosity_indirect;
+#include "/photonics/photonics.glsl"
+#endif
+
 #ifdef DIRECTIONAL_LIGHTMAPS
 #include "/include/lighting/directional_lightmaps.glsl"
+#endif
+
+#ifdef CLOUD_SHADOWS
+#include "/include/lighting/cloud_shadows.glsl"
 #endif
 
 #include "/include/fog/simple_fog.glsl"
@@ -174,10 +189,6 @@ vec3 light_color, ambient_color;
 #include "/include/utility/encoding.glsl"
 #include "/include/utility/fast_math.glsl"
 #include "/include/utility/space_conversion.glsl"
-
-#ifdef CLOUD_SHADOWS
-#include "/include/lighting/cloud_shadows.glsl"
-#endif
 
 const float lod_bias = log2(taau_render_scale);
 
@@ -616,6 +627,9 @@ void main() {
             NoV,
             NoH,
             LoV
+#ifdef USE_RT
+            ,false
+#endif
         ) *
         fragment_color.a;
 

@@ -135,6 +135,9 @@ vec3 get_diffuse_lighting(
     float NoV,
     float NoH,
     float LoV
+#ifdef USE_RT
+    ,bool sample_rt
+#endif
 ) {
 #if defined PROGRAM_GBUFFERS_WATER
     // Small optimization, don't calculate diffuse lighting when albedo is 0 (eg
@@ -167,17 +170,23 @@ vec3 get_diffuse_lighting(
 
     vec3 bounced;
 
-#if defined USE_RT && defined PHOTONICS_ENABLED && defined WORLD_OVERWORLD
-    vec4 gi_color_full = texture2D(radiosity_indirect, uv);
-    vec3 gi_color = gi_color_full.xyz;
+#if defined USE_RT && defined WORLD_OVERWORLD
+    vec4 gi_color_full;
 
+    if (sample_rt) {
+        gi_color_full = texture2D(radiosity_indirect, uv);
+    } else {
+        gi_color_full = vec4(0f);
+    }
+
+    vec3 gi_color = gi_color_full.xyz;
     if (gi_color_full.a != 0f) {
         bounced = gi_color * 0.28f * BOUNCED_LIGHT_I;
     } else {
 #endif
     bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y)) *
         pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I;
-#if defined USE_RT && defined PHOTONICS_ENABLED && defined WORLD_OVERWORLD
+#if defined USE_RT && defined WORLD_OVERWORLD
    }
 #endif
 
@@ -265,7 +274,7 @@ vec3 get_diffuse_lighting(
 
     vec3 skylight_color = skylight * get_skylight_falloff(light_levels.y);
 
-#if defined USE_RT && defined PHOTONICS_ENABLED && defined WORLD_OVERWORLD
+#if defined USE_RT && defined WORLD_OVERWORLD
     if (gi_color_full.a != 0f) {
         skylight_color-= dot(gi_color, luminance_weights_rec709);
         skylight_color = max(skylight_color, 0f) * 0.4;
@@ -276,16 +285,19 @@ vec3 get_diffuse_lighting(
 
     // Blocklight
 
-#if defined USE_RT && defined PHOTONICS_ENABLED
-    vec3 ph_direct_hand = texture2D(radiosity_handheld, uv).xyz;
-    vec3 ph_direct = texture2D(radiosity_direct, uv).xyz;
-    vec4 ph_direct_soft = texture2D(radiosity_direct_soft, uv);
+#if defined USE_RT
+    if (sample_rt) {
+        vec3 ph_direct_hand = texture2D(radiosity_handheld, uv).xyz;
+        vec3 ph_direct = texture2D(radiosity_direct, uv).xyz;
+        vec4 ph_direct_soft = texture2D(radiosity_direct_soft, uv);
 
-    lighting += ph_direct_hand * 3.4 * HANDHELD_LIGHTING_INTENSITY;
-    lighting += ph_direct * 3.4 * BLOCKLIGHT_I;
-    lighting += (ph_direct_soft.xyz / max(ph_direct_soft.w, 1.0f)) * 3.4 * BLOCKLIGHT_I;
-#else
-    float blocklight_falloff =
+        lighting += ph_direct_hand * 3.4 * HANDHELD_LIGHTING_INTENSITY;
+        lighting += ph_direct * 3.4 * BLOCKLIGHT_I;
+        lighting += (ph_direct_soft.xyz / max(ph_direct_soft.w, 1.0f)) * 3.4 * BLOCKLIGHT_I;
+    } else {
+        #endif
+
+        float blocklight_falloff =
         get_blocklight_falloff(light_levels.x, light_levels.y, ao);
     vec3 mc_blocklight = (blocklight_falloff * directional_lighting) *
         (blocklight_scale * blocklight_color);
@@ -304,6 +316,9 @@ vec3 get_diffuse_lighting(
 #ifdef HANDHELD_LIGHTING
     lighting += get_handheld_lighting(scene_pos, ao);
 #endif
+
+#if defined USE_RT && defined PHOTONICS_ENABLED
+    }
 #endif
 
     lighting += material.emission * emission_scale;

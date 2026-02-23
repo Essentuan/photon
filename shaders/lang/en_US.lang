@@ -90,6 +90,15 @@ value.ALPHA_MODE.VOXEL = Voxel
 
 option.ALPHA_MODE.comment = Sets how Photonics handles transparent blocks.\n\nNone - Transparent blocks are treated as opaque\nBlock - Transparency is applied per block (Minimal performance impact)\nVoxel - Transparency is applied per voxel (Heavy performance impact)
 
+option.ENVIRONMENT_REFLECTIONS_MODE    = §e♦ §rEnvironment Reflections
+option.ENVIRONMENT_REFLECTIONS_MODE.comment = Makes water and shiny blocks reflect their environment. Big performance impact \n\n§aRequires Photonics
+value.ENVIRONMENT_REFLECTIONS_MODE.0   = Off
+value.ENVIRONMENT_REFLECTIONS_MODE.1   = Screen Space
+value.ENVIRONMENT_REFLECTIONS_MODE.2   = World Space
+
+option.WSR_WATER_REFLECTIONS           = §e♦ §rWater World Space Reflections
+option.WSR_WATER_REFLECTIONS.comment   = Changes wether water uses world space reflections. \ n\n§aRequires Photonics\n§cWorld space reflections will not reflect LOD chunks.
+
 option.PH_TRACING_EYE                  = §e♦ §rTracing Eye
 
 

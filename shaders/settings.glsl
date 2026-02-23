@@ -424,7 +424,21 @@ const float wetnessHalflife         = 70.0;
 
 // Reflections
 
-  #define ENVIRONMENT_REFLECTIONS
+  #define ENVIRONMENT_REFLECTIONS_MODE 0 // [0 1 2]
+
+#if ENVIRONMENT_REFLECTIONS_MODE > 0
+    #define ENVIRONMENT_REFLECTIONS
+#endif
+
+#if ENVIRONMENT_REFLECTIONS_MODE == 2
+    #define WORLD_SPACE_REFLECTIONS
+#endif
+
+  //#define WSR_WATER_REFLECTIONS
+  #ifdef WSR_WATER_REFLECTIONS
+  #endif
+
+
   #define SKY_REFLECTIONS
   #define SSR_ROUGHNESS_SUPPORT
   #define SSR_RAY_COUNT 4 // [1 2 3 4 5 6 7 8]

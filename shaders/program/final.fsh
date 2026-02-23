@@ -287,7 +287,7 @@ void main() {
     vec3 direction_world = normalize(position_scene - gbufferModelViewInverse[3].xyz);
 
     RayJob ray = RayJob(
-        cameraPosition - world_offset, // Ray origin
+        rt_camera_position, // Ray origin
         direction_world, // Ray direction
         vec3(0), vec3(0), vec3(0), false
     );
@@ -295,7 +295,7 @@ void main() {
     trace_ray(ray);
 
     if (ray.result_hit)
-        fragment_color = ray.result_color;
+        fragment_color = ray.result_color *  ((get_result_sky_light(ray.result_normal) / 15f) * 0.7 + 0.3);
     else
         fragment_color = vec3(1f);
 #else

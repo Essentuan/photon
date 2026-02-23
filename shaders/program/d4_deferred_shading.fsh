@@ -58,13 +58,13 @@ uniform sampler2D colortex11; // clouds history
 uniform sampler2D colortex12; // clouds data
 uniform sampler2D colortex14; // ambient lighting history data
 
-#if defined PHOTONICS && defined PHOTONICS_ENABLED
+uniform int frameCounter;
+
+#if defined PHOTONICS && defined PHOTONICS_ENABLED && defined WORLD_SPACE_REFLECTIONS
 #define USE_RT
 
 uniform sampler2D radiosity_indirect;
-uniform sampler2D radiosity_direct;
-uniform sampler2D radiosity_direct_soft;
-uniform sampler2D radiosity_handheld;
+#include "/photonics/photonics.glsl"
 #endif
 
 #ifndef USE_SEPARATE_ENTITY_DRAWS
@@ -128,7 +128,6 @@ uniform float sunAngle;
 uniform float rainStrength;
 uniform float wetness;
 
-uniform int frameCounter;
 uniform float frameTimeCounter;
 
 uniform int isEyeInWater;
@@ -174,7 +173,6 @@ const bool colortex11MipmapEnabled = true;
 #include "/include/lighting/shadows/common.glsl"
 #include "/include/lighting/shadows/pcss.glsl"
 #include "/include/lighting/shadows/ssrt.glsl"
-#include "/include/lighting/specular_lighting.glsl"
 #include "/include/misc/lod_mod_support.glsl"
 #include "/include/misc/purkinje_shift.glsl"
 #include "/include/sky/sky.glsl"
@@ -197,6 +195,8 @@ const bool colortex11MipmapEnabled = true;
 #if defined CLOUD_SHADOWS
 #include "/include/lighting/cloud_shadows.glsl"
 #endif
+
+#include "/include/lighting/specular_lighting.glsl"
 
 void main() {
 #if !defined USE_SEPARATE_ENTITY_DRAWS
@@ -581,6 +581,9 @@ void main() {
             NoV,
             NoH,
             LoV
+#ifdef USE_RT
+        ,true
+#endif
         );
 
         // Specular highlight
