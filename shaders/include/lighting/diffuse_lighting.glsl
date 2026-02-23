@@ -181,7 +181,7 @@ vec3 get_diffuse_lighting(
 
     vec3 gi_color = gi_color_full.xyz;
     if (gi_color_full.a != 0f) {
-        bounced = gi_color * 0.28f * BOUNCED_LIGHT_I;
+        bounced = gi_color * 0.364f * BOUNCED_LIGHT_I;
     } else {
 #endif
     bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y)) *
