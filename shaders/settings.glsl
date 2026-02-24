@@ -424,7 +424,7 @@ const float wetnessHalflife         = 70.0;
 
 // Reflections
 
-  #define ENVIRONMENT_REFLECTIONS_MODE 0 // [0 1 2]
+  #define ENVIRONMENT_REFLECTIONS_MODE 1 // [0 1 2]
 
 #if ENVIRONMENT_REFLECTIONS_MODE > 0
     #define ENVIRONMENT_REFLECTIONS
