@@ -157,11 +157,7 @@ vec3 light_color, ambient_color;
 #define NO_NORMAL
 #endif
 
-#ifndef WSR_WATER_REFLECTIONS
-#undef WORLD_SPACE_REFLECTIONS
-#endif
-
-#ifdef PROGRAM_GBUFFERS_WATER && defined PHOTONICS && defined PHOTONICS_ENABLED && defined WORLD_SPACE_REFLECTIONS && defined WSR_WATER_REFLECTIONS
+#ifdef PROGRAM_GBUFFERS_WATER && defined PHOTONICS && defined PHOTONICS_ENABLED && defined WORLD_SPACE_REFLECTIONS
 #define USE_RT
 
 uniform sampler2D radiosity_indirect;
