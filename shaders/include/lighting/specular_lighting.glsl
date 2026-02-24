@@ -496,6 +496,9 @@ vec3 get_specular_reflections(
                 SSR_INTERSECTION_STEPS_ROUGH,
                 SSR_REFINEMENT_STEPS,
                 int(mip_level)
+                #ifdef USE_WSR
+                ,flat_normal
+                #endif
             );
 
             float NoV = max(1e-2, dot(flat_normal, -world_dir));
