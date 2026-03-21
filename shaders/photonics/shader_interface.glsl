@@ -6,7 +6,7 @@ uniform sampler2D colortex4; // sky
 uniform sampler2D depthtex1; // depth no transulscents
 uniform sampler2D depthtex2; // depth no transulscents
 
-uniform vec3 sun_dir;
+uniform vec3 light_dir;
 uniform float near;
 uniform float far;
 uniform float worldTime;
@@ -87,7 +87,7 @@ vec2 get_taa_jitter() {
 #endif
 }
 
-vec3 sun_direction = sun_dir;
+vec3 sun_direction = light_dir;
 
 vec3 get_sky_color(ivec2 gBufferLoc, vec3 worldPos, vec3 newNormal) {
     return vec3(1f);

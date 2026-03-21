@@ -12,7 +12,7 @@ vec3 ph_sample_indirect_impl() {
 
     vec3 indirect_color = vec3(1.0f);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < RESTIR_GI_MAX_BOUNCES; i++) {
         lightEmittance = vec3(0.0f);
         ray.origin = ray.result_position + 0.1f * ray.result_normal;
         // TODO: use blue noise

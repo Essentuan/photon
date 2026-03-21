@@ -113,6 +113,9 @@ option.RESTIR_SPATIAL_REUSE_RADIUS = ReSTIR Spatial Reuse Radius
 option.RESTIR_ACCUMULATION_FRAMES = ReSTIR Accumulation Frames
 option.RESTIR_ACCUMULATION_FRAMES.comment = The max number of frames ReSTIR uses for accumulation. Lower values will cause lighting to be more responsive, at the cost of more noise. \n\nNo performance impact
 
+option.RESTIR_GI_MAX_BOUNCES = ReSTIR GI Max Bounces
+value.RESTIR_GI_MAX_BOUNCES.0 = Off
+
 option.RESTIR_DENOISER_PASSES = ReSTIR Denoiser Passes
 option.RESTIR_DENOISER_PASSES.comment = The number of passes the denoiser for ReSTIR uses\n\n§eMedium performance impact
 

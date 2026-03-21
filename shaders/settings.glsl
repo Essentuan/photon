@@ -52,6 +52,7 @@ const float wetnessHalflife         = 70.0;
 #define RESTIR_INITIAL_SAMPLES 32 // [1 2 4 8 16 32]
 #define RESTIR_SPATIAL_REUSE_SAMPLES 5 // [0 1 2 3 4 5 6 7 8 9 10]
 #define RESTIR_SPATIAL_REUSE_RADIUS 10 // [5 10 15 20 25 30]
+#define RESTIR_GI_MAX_BOUNCES 4 // [ 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ]
 #define RESTIR_ACCUMULATION_FRAMES 15 // [1 3 5 10 15 20 30]
 #define RESTIR_DENOISER_PASSES 5 // [0 1 2 3 4 5]
 #define RESTIR_SOFT_SHADOWS
@@ -567,11 +568,7 @@ const float wetnessHalflife         = 70.0;
 
   #define DEBUG_VIEW DEBUG_VIEW_NONE // [DEBUG_VIEW_NONE DEBUG_VIEW_SAMPLER DEBUG_VIEW_HISTOGRAM DEBUG_VIEW_WEATHER]
 
-#if defined PHOTONICS && defined PHOTONICS_ENABLED
-  #define DEBUG_SAMPLER colortex1 // [colortex1 colortex2 colortex3 colortex4 colortex5 colortex6 colortex7 colortex8 colortex9 colortex10 colortex11 colortex12 colortex13 colortex14 colortex15 depthtex0 depthtex1 depthtex2 shadowtex0 shadowtex1 shadowcolor0 shadowcolor1 radiosity_indirect radiosity_direct radiosity_direct_soft radiosity_handheld]
-#else
-  #define DEBUG_SAMPLER colortex1 // [colortex1 colortex2 colortex3 colortex4 colortex5 colortex6 colortex7 colortex8 colortex9 colortex10 colortex11 colortex12 colortex13 colortex14 colortex15 depthtex0 depthtex1 depthtex2 shadowtex0 shadowtex1 shadowcolor0 shadowcolor1]
-#endif
+  #define DEBUG_SAMPLER colortex1 // [colortex1 colortex2 colortex3 colortex4 colortex5 colortex6 colortex7 colortex8 colortex9 colortex10 colortex11 colortex12 colortex13 colortex14 colortex15 depthtex0 depthtex1 depthtex2 shadowtex0 shadowtex1 shadowcolor0 shadowcolor1 denoise_color]
 //#define WHITE_WORLD
 //#define TONEMAP_COMPARISON
   #define tonemap_left tonemap_lottes // [tonemap_aces_fit tonemap_aces_full tonemap_lottes tonemap_hejl_burgess tonemap_tech tonemap_uncharted_2 tonemap_ozius tonemap_reinhard tonemap_reinhard_jodie]
