@@ -20,8 +20,11 @@ uniform vec2 view_pixel_size;
 
 #include "/include/utility/space_conversion.glsl"
 #include "/include/utility/encoding.glsl"
+#include "/include/utility/spherical_harmonics.glsl"
 
 #define load_tex_coord gl_FragCoord.xy * view_pixel_size
+
+vec3 indirect_light_color = vec3(0f);
 
 vec3 load_world_position() {
     vec2 tex_coord = load_tex_coord;
@@ -50,6 +53,24 @@ void load_fragment_variables(out vec3 albedo, out vec3 world_pos, out vec3 world
 #endif
 
     world_pos = load_world_position() - 0.01f * world_normal;
+
+    #if defined OVERWORLD && defined SH_SKYLIGHT
+    vec3 sky_sh[9] = vec3[9](
+        texelFetch(colortex4, ivec2(191, 2), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 3), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 4), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 5), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 6), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 7), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 8), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 9), 0).rgb,
+        texelFetch(colortex4, ivec2(191, 10), 0).rgb
+    );
+
+    indirect_light_color = sh_evaluate_irradiance(sky_sh, vec3(0f), 1f);
+    #else
+    indirect_light_color = mix(texelFetch(colortex4, ivec2(191, 1), 0).rgb, vec3(1f), 0.5);
+    #endif
 }
 
 vec2 get_taa_jitter() {
@@ -67,8 +88,6 @@ vec2 get_taa_jitter() {
 }
 
 vec3 sun_direction = sun_dir;
-
-vec3 indirect_light_color = mix(texelFetch(colortex4, ivec2(191, 1), 0).rgb, vec3(1f), 0.5);
 
 vec3 get_sky_color(ivec2 gBufferLoc, vec3 worldPos, vec3 newNormal) {
     return vec3(1f);

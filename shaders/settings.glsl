@@ -47,7 +47,7 @@ const float wetnessHalflife         = 70.0;
 #ifdef SEPARATE_HANDHELD_RAYS
 #endif
 
-#define LIGHTING_MODE BASIC // [BASIC RESTIR]
+#define LIGHTING_MODE RESTIR // [BASIC RESTIR]
 
 #define RESTIR_INITIAL_SAMPLES 32 // [1 2 4 8 16 32]
 #define RESTIR_SPATIAL_REUSE_SAMPLES 5 // [0 1 2 3 4 5 6 7 8 9 10]

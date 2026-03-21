@@ -171,12 +171,13 @@ vec3 get_diffuse_lighting(
     vec3 bounced;
 
 #if defined USE_RT && defined WORLD_OVERWORLD
-    vec3 gi_color;
-
-    if (sample_rt) {
-        gi_color = texture2D(radiosity_indirect, uv).rgb;
-        bounced = gi_color * 0.364f * BOUNCED_LIGHT_I;
-    } else {
+//    vec3 gi_color;
+//
+//    if (sample_rt) {
+//        gi_color = texture2D(radiosity_indirect, uv).rgb;
+//        bounced = gi_color * 0.364f * BOUNCED_LIGHT_I;
+//    } else {
+    if (!sample_rt) {
 #endif
     bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y)) *
         pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I;
@@ -270,8 +271,9 @@ vec3 get_diffuse_lighting(
 
 #if defined USE_RT && defined WORLD_OVERWORLD
     if (sample_rt) {
-        skylight_color-= dot(gi_color, luminance_weights_rec709);
-        skylight_color = max(skylight_color, 0f) * 0.4;
+        skylight_color = vec3(0);
+//        skylight_color-= dot(gi_color, luminance_weights_rec709);
+//        skylight_color = max(skylight_color, 0f) * 0.4;
     }
 #endif
 
