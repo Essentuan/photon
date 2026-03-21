@@ -582,7 +582,11 @@ void main() {
             NoH,
             LoV
 #ifdef USE_RT
+#ifdef LOD_MOD_ACTIVE
+        ,!is_lod
+#else
         ,true
+#endif
 #endif
         );
 

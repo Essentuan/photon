@@ -12,6 +12,15 @@
 #include "/include/utility/sampling.glsl"
 #include "/include/utility/space_conversion.glsl"
 
+#ifdef ENVIRONMENT_REFLECTIONS
+#endif
+
+#if defined WORLD_SPACE_REFLECTIONS && defined USE_RT && defined ENVIRONMENT_REFLECTIONS
+#include "/photonics/photonics.glsl"
+#define USE_WSR
+#endif
+
+
 #if defined WORLD_OVERWORLD
 #include "/include/fog/overworld/analytic.glsl"
 #endif
@@ -33,34 +42,34 @@ float get_NoH_squared(float NoL, float NoV, float LoV, float light_radius) {
     }
 
     float r_over_length_t =
-    radius_cos * radius_tan * inversesqrt(1.0 - RoL * RoL);
+        radius_cos * radius_tan * inversesqrt(1.0 - RoL * RoL);
     float not_r = r_over_length_t * (NoV - RoL * NoL);
     float vot_r = r_over_length_t * (2.0 * NoV * NoV - 1.0 - RoL * LoV);
 
     // Calculate dot(cross(N, L), V). This could already be calculated and
     // available.​
     float triple = sqrt(
-    clamp01(1.0 - NoL * NoL - NoV * NoV - LoV * LoV + 2.0 * NoL * NoV * LoV)
+        clamp01(1.0 - NoL * NoL - NoV * NoV - LoV * LoV + 2.0 * NoL * NoV * LoV)
     );
 
     // Do one Newton iteration to improve the bent light Direction​
     float NoB_r = r_over_length_t * triple,
-    VoB_r = r_over_length_t * (2.0 * triple * NoV);
+          VoB_r = r_over_length_t * (2.0 * triple * NoV);
     float NoL_vt_r = NoL * radius_cos + NoV + not_r,
-    LoV_vt_r = LoV * radius_cos + 1.0 + vot_r;
+          LoV_vt_r = LoV * radius_cos + 1.0 + vot_r;
     float p = NoB_r * LoV_vt_r, q = NoL_vt_r * LoV_vt_r, s = VoB_r * NoL_vt_r;
     float x_num = q * (-0.5 * p + 0.25 * VoB_r * NoL_vt_r);
     float x_denom = p * p + s * ((s - 2.0 * p)) +
-    NoL_vt_r *
-    ((NoL * radius_cos + NoV) * LoV_vt_r * LoV_vt_r +
-    q * (-0.5 * (LoV_vt_r + LoV * radius_cos) - 0.5));
+        NoL_vt_r *
+            ((NoL * radius_cos + NoV) * LoV_vt_r * LoV_vt_r +
+             q * (-0.5 * (LoV_vt_r + LoV * radius_cos) - 0.5));
     float two_x_1 = 2.0 * x_num / (x_denom * x_denom + x_num * x_num);
     float sin_theta = two_x_1 * x_denom;
     float cos_theta = 1.0 - two_x_1 * x_num;
     not_r =
-    cos_theta * not_r + sin_theta * NoB_r; // use new T to update not_r​
+        cos_theta * not_r + sin_theta * NoB_r; // use new T to update not_r​
     vot_r =
-    cos_theta * vot_r + sin_theta * VoB_r; // use new T to update vot_r​
+        cos_theta * vot_r + sin_theta * VoB_r; // use new T to update vot_r​
 
     // Calculate (N.H)^2 based on the bent light direction​
     float new_NoL = NoL * radius_cos + not_r;
@@ -72,30 +81,30 @@ float get_NoH_squared(float NoL, float NoV, float LoV, float light_radius) {
 }
 
 vec3 get_specular_highlight(
-Material material,
-float NoL,
-float NoV,
-float NoH,
-float LoV,
-float LoH
+    Material material,
+    float NoL,
+    float NoV,
+    float NoH,
+    float LoV,
+    float LoH
 ) {
     const float specular_max_value =
-    4.0; // Maximum value imposed on specular highlight to prevent it from
-    // overloading bloom
+        4.0; // Maximum value imposed on specular highlight to prevent it from
+             // overloading bloom
 
-    #if defined WORLD_OVERWORLD
+#if defined WORLD_OVERWORLD
     const float sun_angular_radius = SUN_ANGULAR_RADIUS * degree;
     const float moon_angular_radius = MOON_ANGULAR_RADIUS * degree;
     float light_radius =
-    (sunAngle < 0.5) ? sun_angular_radius : moon_angular_radius;
+        (sunAngle < 0.5) ? sun_angular_radius : moon_angular_radius;
 
     // No specular highlight on a new moon
     if (sunAngle > 0.5 && moonPhase == 4) {
         return vec3(0.0);
     }
-    #else
+#else
     const float light_radius = SUN_ANGULAR_RADIUS * degree;
-    #endif
+#endif
 
     vec3 fresnel;
     if (material.is_hardcoded_metal) {
@@ -114,7 +123,7 @@ float LoH
     }
 
     vec3 albedo_tint =
-    mix(vec3(1.0), material.albedo, float(material.is_hardcoded_metal));
+        mix(vec3(1.0), material.albedo, float(material.is_hardcoded_metal));
 
     float NoH_squared = get_NoH_squared(NoL, NoV, LoV, light_radius);
     float alpha_squared = material.roughness * material.roughness;
@@ -185,70 +194,72 @@ vec3 sample_ggx_vndf(vec3 viewer_dir, vec2 alpha, vec2 hash) {
 }
 
 vec3 get_sky_reflection(vec3 ray_dir, float skylight, vec3 hit_pos) {
-    #if defined WORLD_OVERWORLD
+#if defined WORLD_OVERWORLD
     bool hit_sky = clamp01(hit_pos.xy) == hit_pos.xy && hit_pos.z >= 1.0;
     float skylight_falloff =
-    hit_sky ? 1.0 : pow12(linear_step(0.0, 0.75, skylight));
+        hit_sky ? 1.0 : pow12(linear_step(0.0, 0.75, skylight));
     return bicubic_filter(colortex4, project_sky(ray_dir)).rgb *
-    skylight_falloff;
-    #else
+        skylight_falloff;
+#else
     return texture(colortex4, project_sky(ray_dir)).rgb;
-    #endif
+#endif
 }
 
-vec3 trace_specular_ray(
-vec3 screen_pos,
-vec3 view_pos,
-vec3 world_pos,
-vec3 ray_dir,
-float dither,
-float skylight,
-uint intersection_step_count,
-uint refinement_step_count,
-int mip_level
+vec3 sky_tint_color = vec3(1f);
+
+vec3 trace_screen_specular_ray(
+    vec3 screen_pos,
+    vec3 view_pos,
+    vec3 world_pos,
+    vec3 ray_dir,
+    float dither,
+    float skylight,
+    uint intersection_step_count,
+    uint refinement_step_count,
+    int mip_level
 ) {
     vec3 view_dir = mat3(gbufferModelView) * ray_dir;
 
-    #ifdef ENVIRONMENT_REFLECTIONS
+#ifdef ENVIRONMENT_REFLECTIONS
     vec3 hit_pos;
     bool hit = raymarch_depth_buffer(
-    screen_pos,
-    view_pos,
-    view_dir,
-    dither,
-    intersection_step_count,
-    refinement_step_count,
-    hit_pos
+        screen_pos,
+        view_pos,
+        view_dir,
+        dither,
+        intersection_step_count,
+        refinement_step_count,
+        hit_pos
     );
-    #else
+#else
     const bool hit = false;
     const vec3 hit_pos = vec3(0.0);
-    #endif
+#endif
 
-    #ifdef SKY_REFLECTIONS
-    vec3 sky_reflection = get_sky_reflection(ray_dir, skylight, hit_pos);
-    #else
+#ifdef SKY_REFLECTIONS
+    vec3 sky_reflection = get_sky_reflection(ray_dir, skylight, hit_pos) * sky_tint_color;
+#else
     const vec3 sky_reflection = vec3(0.0);
-    #endif
+#endif
 
     if (hit) {
         float border_attenuation_factor =
-        mix(0.01, eps, pow4(clamp01(1.0 - gbufferModelViewInverse[2].y)));
+            mix(0.01, eps, pow4(clamp01(1.0 - gbufferModelViewInverse[2].y)));
         float border_attenuation = (hit_pos.x * hit_pos.y - hit_pos.x) *
-        (hit_pos.x * hit_pos.y - hit_pos.y);
+            (hit_pos.x * hit_pos.y - hit_pos.y);
         border_attenuation = dampen(
-        linear_step(0.0, border_attenuation_factor, border_attenuation)
+            linear_step(0.0, border_attenuation_factor, border_attenuation)
         );
 
         vec3 hit_pos_view = screen_to_view_space(
-        SSRT_PROJECTION_MATRIX_INVERSE,
-        hit_pos,
-        false
+            SSRT_PROJECTION_MATRIX_INVERSE,
+            hit_pos,
+            false
         );
         vec3 hit_pos_scene = view_to_scene_space(hit_pos_view);
 
         vec2 hit_uv_prev =
-        reproject_scene_space(hit_pos_scene, false, false).xy;
+            reproject_scene_space(hit_pos_scene, false, false).xy;
         if (clamp01(hit_uv_prev) != hit_uv_prev) {
             return sky_reflection;
         }
@@ -257,29 +268,29 @@ int mip_level
 
         vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev).rgb;
 
-        #if defined WORLD_OVERWORLD
-        #ifdef VL
+#if defined WORLD_OVERWORLD
+#ifdef VL
         // Intended to make reflected fog better match VL
         // Assumption is that if there is a hit and the hit object is vaguely in
         // the direction of the sun then the fog would be shadowed by the hit
         // object
         float fog_shadow = hit ? 1.0 - sqr(max0(dot(light_dir, ray_dir))) : 1.0;
-        #else
+#else
         const float fog_shadow = 1.0;
-        #endif
+#endif
 
         // Apply analytic fog in reflection
         mat2x3 analytic_fog = air_fog_analytic(
-        world_pos,
-        hit_pos_scene + cameraPosition,
-        false,
-        eye_skylight,
-        fog_shadow
+            world_pos,
+            hit_pos_scene + cameraPosition,
+            false,
+            eye_skylight,
+            fog_shadow
         );
 
         reflection = max0(reflection - fog_scattering_previous);
         reflection = reflection * analytic_fog[1] + analytic_fog[0];
-        #endif
+#endif
 
         return mix(sky_reflection, reflection, border_attenuation);
     } else {
@@ -287,52 +298,234 @@ int mip_level
     }
 }
 
-vec3 get_specular_reflections(
-Material material,
-mat3 tbn_matrix,
+#ifdef USE_WSR
+vec3 trace_world_specular_ray(
+out bool hit,
 vec3 screen_pos,
-vec3 view_pos,
 vec3 world_pos,
-vec3 normal,
 vec3 flat_normal,
-vec3 world_dir,
-vec3 tangent_dir,
-float skylight,
-bool is_water
+vec3 ray_dir
+) {
+    RayJob ray = RayJob(
+    world_pos - world_offset + 0.001 * flat_normal,
+    ray_dir,
+    vec3(0), vec3(0), vec3(0), false
+    );
+
+    RAY_ITERATION_COUNT = WSR_RAY_ITERATIONS;
+    trace_ray(ray, true);
+
+    hit = ray.result_hit;
+    const vec3 hit_pos = vec3(0.0);
+
+    if (!hit) return vec3(0f);
+
+    vec3 hit_color = ray.result_color;
+    vec3 hit_flat_normal = ray.result_normal;
+    vec3 hit_pos_world = ray.result_position + world_offset;
+    vec3 hit_pos_scene = ray.result_position - rt_camera_position;
+    float hit_sky = get_result_sky_light(hit_flat_normal) / 15f;
+    vec2 hit_light_levels = vec2(0, hit_sky);
+
+    uint hit_material_mask = uint(max(result_block_id - 10000, 0));
+    vec2 hit_uv_prev = reproject_scene_space(hit_pos_scene, false, false).xy;
+
+    Material hit_material = material_from(
+    hit_color,
+    hit_material_mask,
+    hit_pos_world,
+    hit_flat_normal,
+    hit_light_levels
+    );
+
+    #if defined WORLD_OVERWORLD && defined CLOUD_SHADOWS
+    float cloud_shadows = get_cloud_shadows(colortex8, hit_pos_scene);
+    #else
+    const float cloud_shadows = 1.0;
+    #endif
+
+    #if (defined WORLD_OVERWORLD || defined WORLD_END) && defined SHADOW
+    float shadow_distance_fade = 0.0;
+    float sss_depth = 0.0;
+
+    vec3 shadows = get_filtered_shadows(
+    hit_pos_scene,
+    hit_flat_normal,
+    hit_light_levels.y,
+    cloud_shadows,
+    hit_material.sss_amount,
+    shadow_distance_fade,
+    sss_depth
+    );
+    #else
+    const vec3 shadows = vec3(1.0);
+    const float shadow_distance_fade = 1.0;
+    const float sss_depth = 0.0;
+    #endif
+
+    vec3 direction_world = normalize(hit_pos_scene - gbufferModelViewInverse[3].xyz);
+
+    float NoL = dot(hit_flat_normal, light_dir);
+    float NoV = clamp01(dot(hit_flat_normal, -direction_world));
+    float LoV = dot(light_dir, -direction_world);
+    float halfway_norm = inversesqrt(2.0 * LoV + 2.0);
+    float NoH = (NoL + NoV) * halfway_norm;
+
+    vec3 reflection = get_diffuse_lighting(
+        hit_material,
+        hit_pos_scene,
+        hit_flat_normal,
+        hit_flat_normal,
+        hit_flat_normal,
+        shadows,
+        hit_light_levels,
+        1, // ao
+        1, // ambient_sss,
+        sss_depth,
+        #ifdef CLOUD_SHADOWS
+        cloud_shadows,
+        #endif
+        #ifdef SHADOW_SSRT
+        0,
+        #else
+        shadow_distance_fade,
+        #endif
+        NoL,
+        NoV,
+        NoH,
+        LoV,
+        #ifdef USE_RT
+        false
+        #endif
+    );
+
+    #if defined WORLD_OVERWORLD
+    #ifdef VL
+    // Intended to make reflected fog better match VL
+    // Assumption is that if there is a hit and the hit object is vaguely in
+    // the direction of the sun then the fog would be shadowed by the hit
+    // object
+    float fog_shadow = hit ? 1.0 - sqr(max0(dot(light_dir, ray_dir))) : 1.0;
+    #else
+    const float fog_shadow = 1.0;
+    #endif
+
+    // Apply analytic fog in reflection
+    mat2x3 analytic_fog = air_fog_analytic(
+        world_pos,
+        #ifdef USE_WSR
+        hit_pos_world,
+        #else
+        hit_pos_scene + cameraPosition,
+        #endif
+        false,
+        eye_skylight,
+        fog_shadow
+    );
+
+    reflection = reflection * analytic_fog[1] + analytic_fog[0];
+    #endif
+
+    return reflection * result_tint_color;
+}
+
+vec3 trace_specular_ray(
+    vec3 flat_normal,
+    vec3 screen_pos,
+    vec3 view_pos,
+    vec3 world_pos,
+    vec3 ray_dir,
+    float dither,
+    float skylight,
+    uint intersection_step_count,
+    uint refinement_step_count,
+    int mip_level
+) {
+    #ifdef ENVIRONMENT_REFLECTIONS
+    bool wsr_hit;
+    vec3 reflection = trace_world_specular_ray(
+    wsr_hit,
+    screen_pos,
+    world_pos,
+    flat_normal,
+    ray_dir
+    );
+
+    if (wsr_hit) return reflection;
+
+    sky_tint_color = result_tint_color;
+    #else
+    sky_tint_color = vec3(1f);
+    #endif
+
+    return trace_screen_specular_ray(
+    screen_pos,
+    view_pos,
+    world_pos,
+    ray_dir,
+    dither,
+    #ifdef ENVIRONMENT_REFLECTIONS
+    1,
+    #else
+    skylight,
+    #endif
+    intersection_step_count,
+    refinement_step_count,
+    mip_level
+    );
+}
+
+#else
+#define trace_specular_ray trace_screen_specular_ray
+#endif
+
+
+vec3 get_specular_reflections(
+    Material material,
+    mat3 tbn_matrix,
+    vec3 screen_pos,
+    vec3 view_pos,
+    vec3 world_pos,
+    vec3 normal,
+    vec3 flat_normal,
+    vec3 world_dir,
+    vec3 tangent_dir,
+    float skylight,
+    bool is_water
 ) {
     vec3 albedo_tint =
-    material.is_hardcoded_metal ? material.albedo : vec3(1.0);
+        material.is_hardcoded_metal ? material.albedo : vec3(1.0);
 
     float alpha_squared = material.roughness * material.roughness;
     float dither =
-    r1(frameCounter,
-    texelFetch(noisetex, ivec2(gl_FragCoord.xy) & 511, 0).b);
+        r1(frameCounter,
+           texelFetch(noisetex, ivec2(gl_FragCoord.xy) & 511, 0).b);
 
-    #ifdef LOD_MOD_ACTIVE
+#ifdef LOD_MOD_ACTIVE
     // Convert screen depth to combined depth
     screen_pos = view_to_screen_space(SSRT_PROJECTION_MATRIX, view_pos, true);
-    #endif
+#endif
 
-    #if defined SSR_ROUGHNESS_SUPPORT && defined SPECULAR_MAPPING
+#if defined SSR_ROUGHNESS_SUPPORT && defined SPECULAR_MAPPING
     if (!is_water) { // Rough reflection
         float mip_level =
-        min(8.0 * (1.0 - pow8(1.0 - material.roughness)), 5.0);
+            min(8.0 * (1.0 - pow8(1.0 - material.roughness)), 5.0);
 
         vec3 reflection = vec3(0.0);
 
         for (int i = 0; i < SSR_RAY_COUNT; ++i) {
             vec2 hash;
             hash.x = interleaved_gradient_noise(
-            gl_FragCoord.xy,
-            frameCounter * SSR_RAY_COUNT + i
+                gl_FragCoord.xy,
+                frameCounter * SSR_RAY_COUNT + i
             );
             hash.y = interleaved_gradient_noise(
-            gl_FragCoord.xy + vec2(97.0, 23.0),
-            frameCounter * SSR_RAY_COUNT + i
+                gl_FragCoord.xy + vec2(97.0, 23.0),
+                frameCounter * SSR_RAY_COUNT + i
             );
 
             vec3 microfacet_normal = tbn_matrix *
-            sample_ggx_vndf(-tangent_dir, vec2(material.roughness), hash);
+                sample_ggx_vndf(-tangent_dir, vec2(material.roughness), hash);
             vec3 ray_dir = reflect(world_dir, microfacet_normal);
 
             float NoL = dot(normal, ray_dir);
@@ -341,15 +534,18 @@ bool is_water
             }
 
             vec3 radiance = trace_specular_ray(
-            screen_pos,
-            view_pos,
-            world_pos,
-            ray_dir,
-            dither,
-            skylight,
-            SSR_INTERSECTION_STEPS_ROUGH,
-            SSR_REFINEMENT_STEPS,
-            int(mip_level)
+#ifdef USE_WSR
+                flat_normal,
+#endif
+                screen_pos,
+                view_pos,
+                world_pos,
+                ray_dir,
+                dither,
+                skylight,
+                SSR_INTERSECTION_STEPS_ROUGH,
+                SSR_REFINEMENT_STEPS,
+                int(mip_level)
             );
 
             float NoV = max(1e-2, dot(flat_normal, -world_dir));
@@ -376,13 +572,13 @@ bool is_water
         }
         return reflection * material.ssr_multiplier;
     }
-    #else
+#else
     // Fade reflection when rough reflections are disabled
     if (material.roughness > 0.05) {
         material.f0 *= 1.0 - sqr(material.roughness);
         material.ssr_multiplier = sqr(1.0 - material.roughness);
     }
-    #endif
+#endif
 
     // Mirror-like reflections
 
@@ -408,15 +604,18 @@ bool is_water
     float v2 = v2_smith_ggx(NoL, NoV, alpha_squared);
 
     vec3 reflection = trace_specular_ray(
-    screen_pos,
-    view_pos,
-    world_pos,
-    ray_dir,
-    dither,
-    skylight,
-    SSR_INTERSECTION_STEPS_SMOOTH,
-    SSR_REFINEMENT_STEPS,
-    0
+#ifdef USE_WSR
+        flat_normal,
+#endif
+        screen_pos,
+        view_pos,
+        world_pos,
+        ray_dir,
+        dither,
+        skylight,
+        SSR_INTERSECTION_STEPS_SMOOTH,
+        SSR_REFINEMENT_STEPS,
+        0
     );
     reflection *= albedo_tint * fresnel;
 

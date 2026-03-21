@@ -171,16 +171,10 @@ vec3 get_diffuse_lighting(
     vec3 bounced;
 
 #if defined USE_RT && defined WORLD_OVERWORLD
-    vec4 gi_color_full;
+    vec3 gi_color;
 
     if (sample_rt) {
-        gi_color_full = texture2D(radiosity_indirect, uv);
-    } else {
-        gi_color_full = vec4(0f);
-    }
-
-    vec3 gi_color = gi_color_full.xyz;
-    if (gi_color_full.a != 0f) {
+        gi_color = texture2D(radiosity_indirect, uv).rgb;
         bounced = gi_color * 0.364f * BOUNCED_LIGHT_I;
     } else {
 #endif
@@ -275,7 +269,7 @@ vec3 get_diffuse_lighting(
     vec3 skylight_color = skylight * get_skylight_falloff(light_levels.y);
 
 #if defined USE_RT && defined WORLD_OVERWORLD
-    if (gi_color_full.a != 0f) {
+    if (sample_rt) {
         skylight_color-= dot(gi_color, luminance_weights_rec709);
         skylight_color = max(skylight_color, 0f) * 0.4;
     }
@@ -287,13 +281,8 @@ vec3 get_diffuse_lighting(
 
 #if defined USE_RT
     if (sample_rt) {
-        vec3 ph_direct_hand = texture2D(radiosity_handheld, uv).xyz;
-        vec3 ph_direct = texture2D(radiosity_direct, uv).xyz;
-        vec4 ph_direct_soft = texture2D(radiosity_direct_soft, uv);
-
-        lighting += ph_direct_hand * 3.4 * HANDHELD_LIGHTING_INTENSITY;
-        lighting += ph_direct * 3.4 * BLOCKLIGHT_I;
-        lighting += (ph_direct_soft.xyz / max(ph_direct_soft.w, 1.0f)) * 3.4 * BLOCKLIGHT_I;
+        lighting+= sample_photonics_direct(uv) * 3.4f * BLOCKLIGHT_I;
+        lighting+= sample_photonics_handheld(uv) * 3.4f * HANDHELD_LIGHTING_INTENSITY;
     } else {
         #endif
 
