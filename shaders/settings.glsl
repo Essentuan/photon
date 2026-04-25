@@ -655,8 +655,7 @@ const float wetnessHalflife         = 70.0;
 #ifdef PHO_RS_SOFT_SHADOWS
 #endif
 
-// Not available on OF
-#if MC_VERSION >= 12111
+#if MC_VERSION >= 260100
   #define USE_SEPARATE_ENTITY_DRAWS
 #endif
 
