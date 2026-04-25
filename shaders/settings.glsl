@@ -581,27 +581,26 @@ const float wetnessHalflife         = 70.0;
   #define NOISE_ON_DH_TERRAIN // High-frequency noise on Distant Horizons terrain
 
 // Photonics
-// Photonics uses PH_ for its own defines, so use PHO instead
 
-  #define PHO_ENABLED
-  #define PHO_LIGHTING_MODE SIMPLE // [SIMPLE RESTIR]
+  #define PHOTONICS_ENABLED
+  #define PHOTONICS_LIGHTING_MODE SIMPLE // [SIMPLE RESTIR]
 
-  #define PHO_ALPHA_MODE BLOCK // [NONE BLOCK VOXEL]
-  #define PHO_MAX_LIGHTS 1000 // [250 300 350 500 550 700 750 1000 1500 2000 2500 3000 3500 4000]
-  #define PHO_GLINT_STRENGTH 0.2 // [0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
-  #define PHO_TWO_HANDHELD_RAYS
+  #define PHOTONICS_ALPHA_MODE BLOCK // [NONE BLOCK VOXEL]
+  #define PHOTONICS_MAX_LIGHTS 1000 // [250 300 350 500 550 700 750 1000 1500 2000 2500 3000 3500 4000]
+  #define PHOTONICS_GLINT_STRENGTH 0.2 // [0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+  #define PHOTONICS_TWO_HANDHELD_RAYS
 
-  #define PHO_SHARP_MAX_SAMPLES 20 // [5 10 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100]
+  #define PHOTONICS_SHARP_MAX_SAMPLES 20 // [5 10 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100]
 
 // ReSTIR settings
 
-  #define PHO_RS_INITIAL_SAMPLES 32 // [1 2 4 8 16 32]
-  #define PHO_RS_SPR_SAMPLES 5 // [0 1 2 3 4 5 6 7 8 9 10]
-  #define PHO_RS_SPR_RADIUS 10 // [5 10 15 20 25 30]
-  #define PHO_RS_ACCUMULATION 32 // [1 2 4 8 16 32 48 64]
-  #define PHO_RS_DENOISER_PASSES 5 // [0 1 2 3 4 5]
-  #define PHO_RS_SOFT_SHADOWS
-//#define PHO_RS_COMBINED_GI
+  #define PHOTONICS_RESTIR_INITIAL_SAMPLES 32 // [1 2 4 8 16 32]
+  #define PHOTONICS_RESTIR_SPR_SAMPLES 5 // [0 1 2 3 4 5 6 7 8 9 10]
+  #define PHOTONICS_RESTIR_SPR_RADIUS 10 // [5 10 15 20 25 30]
+  #define PHOTONICS_RESTIR_ACCUMULATION 32 // [1 2 4 8 16 32 48 64]
+  #define PHOTONICS_RESTIR_DENOISER_PASSES 5 // [0 1 2 3 4 5]
+  #define PHOTONICS_RESTIR_SOFT_SHADOWS
+//#define PHOTONICS_RESTIR_COMBINED_GI
 
 // The settings parser only detects boolean options which are used with
 // #ifdef; it doesn't look for #if defined or other settings usages (e.g in
@@ -650,13 +649,13 @@ const float wetnessHalflife         = 70.0;
 #ifdef CREPUSCULAR_RAYS 
 #endif
 
-#ifdef PHO_ENABLED
+#ifdef PHOTONICS_ENABLED
 #endif
 
-#ifdef PHO_TWO_HANDHELD_RAYS
+#ifdef PHOTONICS_TWO_HANDHELD_RAYS
 #endif
 
-#ifdef PHO_RS_SOFT_SHADOWS
+#ifdef PHOTONICS_RESTIR_SOFT_SHADOWS
 #endif
 
 #if MC_VERSION >= 260100
