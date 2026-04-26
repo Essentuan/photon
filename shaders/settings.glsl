@@ -658,7 +658,7 @@ const float wetnessHalflife         = 70.0;
 #ifdef PHOTONICS_RESTIR_SOFT_SHADOWS
 #endif
 
-#if MC_VERSION >= 260100
+#if MC_VERSION > 12111
   #define USE_SEPARATE_ENTITY_DRAWS
 #endif
 
