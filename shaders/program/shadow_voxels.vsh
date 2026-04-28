@@ -19,7 +19,7 @@ flat out vec3 tint;
 void main() {
     tint = gl_Color.rgb;
 
-    #if !defined WORLD_NETHER
+#if !defined WORLD_NETHER
     vec3 pos = transform(gl_ModelViewMatrix, gl_Vertex.xyz);
 
     cage_normal = gl_Normal;
@@ -30,9 +30,9 @@ void main() {
 
     gl_Position = vec4(shadow_clip_pos, 1.0);
 
-    #else
+#else
     // No shadows, discard vertices now
     gl_Position = vec4(-1.0);
     return;
-    #endif
+#endif
 }

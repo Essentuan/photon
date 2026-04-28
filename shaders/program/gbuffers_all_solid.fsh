@@ -315,14 +315,21 @@ void main() {
     RayJob ray = RayJob(
         world_pos - world_offset - 0.001f * block_normal, // Ray origin
         world_dir, // Ray direction
-        vec3(0), vec3(0), vec3(0), false
+        vec3(0),
+        vec3(0),
+        vec3(0),
+        false
     );
 
     ray_constraint = ivec3(ray.origin);
     trace_ray(ray);
 
-    if (!ray.result_hit) discard;
-    if (ray.result_normal == vec3(0.0)) ray.result_normal = block_normal;
+    if (!ray.result_hit) {
+        discard;
+    }
+    if (ray.result_normal == vec3(0.0)) {
+        ray.result_normal = block_normal;
+    }
 
     scene_pos = ray.result_position + world_offset - cameraPosition;
     view_pos = scene_to_view_space(scene_pos);

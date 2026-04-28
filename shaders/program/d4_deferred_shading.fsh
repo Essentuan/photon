@@ -160,7 +160,7 @@ const bool colortex11MipmapEnabled = true;
 #define ATMOSPHERE_SCATTERING_LUT depthtex0
 #define TEMPORAL_REPROJECTION
 
-#ifdef PHO_IN_USE
+#ifdef PHOTONICS_IN_USE
 #define PHOTONICS_DIFFUSE
 #endif
 

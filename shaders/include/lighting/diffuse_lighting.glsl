@@ -27,7 +27,7 @@
 #if defined PHOTONICS_DIFFUSE
 #include "/photonics/ph_samplers.glsl"
 
-#ifndef PHO_RS_COMBINED_GI
+#ifndef PHOTONICS_RESTIR_COMBINED_GI
 uniform sampler2D radiosity_indirect;
 #endif
 
@@ -255,17 +255,15 @@ vec3 get_diffuse_lighting(
 
 // Disable bounced lighting with Photonics
 #if defined PHOTONICS_DIFFUSE
-    #define include_bounced is_lod
+#define DO_BOUNCED_LIGHTING is_lod
 #else
-    #define include_bounced true
+#define DO_BOUNCED_LIGHTING true
 #endif
 
-    vec3 bounced;
-    if (include_bounced) {
+    vec3 bounced = vec3(0.0);
+    if (DO_BOUNCED_LIGHTING) {
         bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y))
-        * pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I;
-    } else {
-        bounced = vec3(0f);
+            * pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I;
     }
 
     vec3 sss = sss_approx(
@@ -324,17 +322,29 @@ vec3 get_diffuse_lighting(
 
 #if defined PHOTONICS_DIFFUSE
     if (is_lod) {
-        lighting += get_sky_lighting(material, bent_normal, light_levels, ao, ambient_sss);
+        lighting += get_sky_lighting(
+            material,
+            bent_normal,
+            light_levels,
+            ao,
+            ambient_sss
+        );
     } else {
 // When combined gi is enabled
 // Photonics includes gi in the result of sample_photonics_direct
-#ifndef PHO_RS_COMBINED_GI
+#ifndef PHOTONICS_RESTIR_COMBINED_GI
         lighting += texture2D(radiosity_indirect, uv).xyz * SKYLIGHT_I;
 #endif
     }
 
 #else
-    lighting += get_sky_lighting(material, bent_normal, light_levels, ao, ambient_sss);
+    lighting += get_sky_lighting(
+        material,
+        bent_normal,
+        light_levels,
+        ao,
+        ambient_sss
+    );
 #endif
 
     // Blocklight
@@ -350,12 +360,24 @@ vec3 get_diffuse_lighting(
 #endif
 
         // BLOCKLIGHT_I is applied in /photonics/modifiers/modify_lights.glsl
-        lighting+= blocklight * blocklight_scale;
+        lighting += blocklight * blocklight_scale;
     } else {
-        lighting += get_block_lighting(scene_pos, flat_normal, light_levels, ao, directional_lighting);
+        lighting += get_block_lighting(
+            scene_pos,
+            flat_normal,
+            light_levels,
+            ao,
+            directional_lighting
+        );
     }
 #else
-    lighting += get_block_lighting(scene_pos, flat_normal, light_levels, ao, directional_lighting);
+    lighting += get_block_lighting(
+        scene_pos,
+        flat_normal,
+        light_levels,
+        ao,
+        directional_lighting
+    );
 #endif
 
     lighting += material.emission * emission_scale;
