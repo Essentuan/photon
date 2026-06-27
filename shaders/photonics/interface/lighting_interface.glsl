@@ -28,7 +28,7 @@ vec3 get_sky_color(vec3 player_pos, vec3 direction) {
 }
 
 vec3 get_sun_color(vec3 player_pos, vec3 directioin) {
-    return get_light_color() * BOUNCED_LIGHT_I;
+    return get_light_color() * BOUNCED_LIGHT_I * 4.0f;
 }
 
 #if defined OVERWORLD
@@ -46,3 +46,7 @@ bool is_in_shadow_at(vec3 scene_pos, vec3 geo_normal) {
     return false;
 }
 #endif
+
+bool sample_sun_color(vec3 scene_pos, vec3 geo_normal, inout vec3 sun_color) {
+    return is_in_shadow_at(scene_pos, geo_normal);
+}
