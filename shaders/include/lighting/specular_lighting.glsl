@@ -12,8 +12,15 @@
 #include "/include/utility/sampling.glsl"
 #include "/include/utility/space_conversion.glsl"
 
+#if defined PHOTONICS_WORLD_SPACE_REFLECTIONS && defined PHOTONICS_REFLECTIONS
+#include "/photonics/tracing.glsl"
+#define PH_USE_WSR
+#endif
+
+
 #if defined WORLD_OVERWORLD
 #include "/include/fog/overworld/analytic.glsl"
+#include "/include/lighting/cloud_shadows.glsl"
 #endif
 
 // ----------------------
@@ -186,77 +193,283 @@ vec3 sample_ggx_vndf(vec3 viewer_dir, vec2 alpha, vec2 hash) {
 
 vec3 get_sky_reflection(vec3 ray_dir, float skylight, vec3 hit_pos) {
 #if defined WORLD_OVERWORLD
-    bool hit_sky
-        = false; // clamp01(hit_pos.xy) == hit_pos.xy && hit_pos.z >= 1.0;
-    float skylight_falloff
-        = hit_sky ? 1.0 : pow12(linear_step(0.0, 0.75, skylight));
-    return bicubic_filter(colortex4, project_sky(ray_dir)).rgb
-        * skylight_falloff;
+    vec3 sky_color = bicubic_filter(colortex4, project_sky(ray_dir)).rgb;
+
+#if defined PH_USE_WSR
+    return sky_color;
+#else
+    bool hit_sky = clamp01(hit_pos.xy) == hit_pos.xy && hit_pos.z >= 1.0;
+    float skylight_factor = hit_sky ? 1.0f : pow12(linear_step(0.0, 0.75, skylight));
+
+    return sky_color * skylight_factor;
+#endif
 #else
     return texture(colortex4, project_sky(ray_dir)).rgb;
 #endif
 }
+
+#define SPECULAR_NO_HIT 0
+#define SPECULAR_SSR_HIT 1
+#define SPECULAR_WSR_HIT 2
+
+void trace_ssr_reflection(
+    vec3 screen_pos,
+    vec3 view_pos,
+    vec3 ray_dir,
+    float dither,
+    uint intersection_step_count,
+    uint refinement_step_count,
+    out vec3 hit_pos_scene,
+    inout int hit_type
+) {
+    vec3 view_dir = mat3(gbufferModelView) * ray_dir;
+
+    vec3 ssr_screen_pos;
+    bool ssr_hit = raymarch_depth_buffer(
+            screen_pos,
+            view_pos,
+            view_dir,
+            dither,
+            intersection_step_count,
+            refinement_step_count,
+            ssr_screen_pos
+    );
+
+    if (!ssr_hit) return;
+
+    vec3 ssr_pos_view = screen_to_view_space(
+        SSRT_PROJECTION_MATRIX_INVERSE,
+        ssr_screen_pos,
+        false
+    );
+
+    hit_pos_scene = view_to_scene_space(ssr_pos_view);
+    hit_type = SPECULAR_SSR_HIT;
+}
+
+float border_attenuation_factor(vec3 hit_pos) {
+    hit_pos = scene_to_view_space(hit_pos);
+    hit_pos = view_to_screen_space(hit_pos, false, false);
+
+    float border_attenuation_factor
+    = mix(0.01, eps, pow4(clamp01(1.0 - gbufferModelViewInverse[2].y)));
+    float border_attenuation = (hit_pos.x * hit_pos.y - hit_pos.x)
+    * (hit_pos.x * hit_pos.y - hit_pos.y);
+
+    return dampen(linear_step(0.0, border_attenuation_factor, border_attenuation));
+}
+
+#if defined PH_USE_WSR
+Material ray_result_to_material(
+        RayResult result,
+        vec3 scene_pos,
+        vec3 normal,
+        out float alpha
+) {
+    VoxelData voxel_data = ray_result_voxel_data(result);
+
+    vec4 albedo = voxel_data_albedo(voxel_data);
+    alpha = albedo.a;
+
+    Material hit_material = material_from(
+        albedo.rgb,
+        uint(max(voxel_data_block_id(voxel_data) - 10000, 0)),
+        scene_pos + cameraPosition,
+        normal,
+        albedo.xy // should be skylight, but is currently unused
+    );
+
+    decode_specular_map(voxel_data_specular(voxel_data), hit_material);
+
+    return hit_material;
+}
+
+vec3 trace_wsr_reflection(
+    vec3 view_pos,
+    vec3 ray_dir,
+    vec3 flat_normal,
+
+    out vec4 tint,
+    out vec3 hit_pos_scene,
+    inout int hit_type
+) {
+    RayIterator itr;
+    ray_iter_begin(
+            itr,
+            view_to_scene_space(view_pos) + rt_camera_position + 0.001 * flat_normal,
+            ray_dir
+    );
+
+    while (ray_iter_has_next(itr)) {
+        RayResult hit = ray_iter_next(itr);
+
+        hit_pos_scene = ray_result_position(hit) - rt_camera_position;
+        vec3 hit_normal = ray_result_normal(hit);
+        vec2 hit_light_levels = vec2(0.0f, float(ray_result_skylight(hit)) / 15f) * 0.25f;
+
+        float alpha;
+        Material hit_material = ray_result_to_material(hit, hit_pos_scene, hit_normal, alpha);
+
+        // Cloud Shadows
+
+#if defined WORLD_OVERWORLD && defined CLOUD_SHADOWS
+        float cloud_shadows = get_cloud_shadows(colortex8, hit_pos_scene);
+#else
+        const float cloud_shadows = 1.0;
+#endif
+
+        // Shadows / SSS
+
+#if (defined WORLD_OVERWORLD || defined WORLD_END) && defined SHADOW
+        float shadow_distance_fade = 0.0;
+        float sss_depth = 0.0;
+
+        vec3 shadows = get_filtered_shadows(
+                hit_pos_scene,
+                hit_normal,
+                hit_light_levels.y,
+                cloud_shadows,
+                hit_material.sss_amount,
+                shadow_distance_fade,
+                sss_depth
+        );
+#else
+        const vec3 shadows = vec3(1.0);
+        const float shadow_distance_fade = 1.0;
+        const float sss_depth = 0.0;
+#endif
+
+            // Diffuse Lighting
+
+        vec3 direction_world = normalize(hit_pos_scene - gbufferModelViewInverse[3].xyz);
+
+        float NoL = dot(hit_normal, light_dir);
+        float NoV = clamp01(dot(hit_normal, -direction_world));
+        float LoV = dot(light_dir, -direction_world);
+        float halfway_norm = inversesqrt(2.0 * LoV + 2.0);
+        float NoH = (NoL + NoV) * halfway_norm;
+
+        vec3 color = get_diffuse_lighting(
+            hit_material,
+            hit_pos_scene,
+            hit_normal,
+            hit_normal,
+            hit_normal,
+            shadows,
+            hit_light_levels,
+            1, // ao
+            1, // ambient_sss,
+            sss_depth,
+#ifdef CLOUD_SHADOWS
+            cloud_shadows,
+#endif
+#ifdef SHADOW_SSRT
+            0,
+#else
+            shadow_distance_fade,
+#endif
+#ifdef PHOTONICS_DIFFUSE
+            true,
+#endif
+            NoL,
+            NoV,
+            NoH,
+            LoV
+        );
+
+        if (alpha != 1.0f) {
+            ray_iter_apply_transparency(tint, vec4(color, alpha));
+            ray_iter_skip_block(itr);
+
+            continue;
+        }
+
+        hit_type = SPECULAR_WSR_HIT;
+        return mix(color, tint.rgb, tint.a);
+    }
+
+    return vec3(-1.0f);
+}
+
+bool should_wsr_trace(vec3 hit_scene_pos, int hit_type) {
+    if (hit_type == SPECULAR_NO_HIT) return true;
+
+    float border_attenuation = border_attenuation_factor(hit_scene_pos);
+    return border_attenuation < 1.0f;
+}
+#endif
 
 vec3 trace_specular_ray(
     vec3 screen_pos,
     vec3 view_pos,
     vec3 world_pos,
     vec3 ray_dir,
+    vec3 flat_normal,
     float dither,
     float skylight,
     uint intersection_step_count,
     uint refinement_step_count,
     int mip_level
 ) {
-    vec3 view_dir = mat3(gbufferModelView) * ray_dir;
+    int hit_type = SPECULAR_NO_HIT;
 
-#ifdef ENVIRONMENT_REFLECTIONS
-    vec3 hit_pos;
-    bool hit = raymarch_depth_buffer(
+#ifndef ENVIRONMENT_REFLECTIONS
+    const vec3 hit_pos_scene = vec3(0.0f);
+    const vec3 wsr_color = vec3(0.0f);
+#else
+    vec3 hit_pos_scene;
+
+    trace_ssr_reflection(
         screen_pos,
         view_pos,
-        view_dir,
+        ray_dir,
         dither,
         intersection_step_count,
         refinement_step_count,
-        hit_pos
+        hit_pos_scene,
+        hit_type
     );
+
+#if defined PH_USE_WSR
+    vec3 wsr_color = vec3(-1.0f);
+    vec4 tint_color = vec4(0.0f);
+
+    if (should_wsr_trace(hit_pos_scene, hit_type)) {
+        wsr_color = trace_wsr_reflection(
+            view_pos,
+            ray_dir,
+            flat_normal,
+            tint_color,
+            hit_pos_scene,
+            hit_type
+        );
+    }
 #else
-    const bool hit = false;
-    const vec3 hit_pos = vec3(0.0);
+    const vec3 wsr_color = vec3(0.0f);
+    const vec4 tint_color = vec4(0.0f);
 #endif
 
 #ifdef SKY_REFLECTIONS
-    vec3 sky_reflection = get_sky_reflection(ray_dir, skylight, hit_pos);
+#if defined PH_USE_WSR
+    vec3 sky_reflection = mix(get_sky_reflection(ray_dir, skylight, hit_pos_scene), tint_color.rgb, tint_color.a);
+#else
+    vec3 sky_reflection = get_sky_reflection(ray_dir, skylight, hit_pos_scene);
+#endif
 #else
     const vec3 sky_reflection = vec3(0.0);
 #endif
 
-    if (hit) {
-        float border_attenuation_factor
-            = mix(0.01, eps, pow4(clamp01(1.0 - gbufferModelViewInverse[2].y)));
-        float border_attenuation = (hit_pos.x * hit_pos.y - hit_pos.x)
-            * (hit_pos.x * hit_pos.y - hit_pos.y);
-        border_attenuation = dampen(
-            linear_step(0.0, border_attenuation_factor, border_attenuation)
-        );
+    if (hit_type == SPECULAR_NO_HIT) {
+        return sky_reflection;
+    }
 
-        vec3 hit_pos_view = screen_to_view_space(
-            SSRT_PROJECTION_MATRIX_INVERSE,
-            hit_pos,
-            false
-        );
-        vec3 hit_pos_scene = view_to_scene_space(hit_pos_view);
+    vec3 hit_uv_prev = reproject_scene_space(hit_pos_scene, false, false);
 
-        vec2 hit_uv_prev
-            = reproject_scene_space(hit_pos_scene, false, false).xy;
-        if (clamp01(hit_uv_prev) != hit_uv_prev) {
-            return sky_reflection;
-        }
+    if (clamp01(hit_uv_prev) == hit_uv_prev) {
+        float border_attenuation = border_attenuation_factor(hit_pos_scene);
 
-        vec3 reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
-
-        vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev).rgb;
+        vec3 reflection = textureLod(colortex5, hit_uv_prev.xy, mip_level).rgb;
+        vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev.xy).rgb;
 
 #if defined WORLD_OVERWORLD
 #ifdef VL
@@ -264,28 +477,37 @@ vec3 trace_specular_ray(
         // Assumption is that if there is a hit and the hit object is vaguely in
         // the direction of the sun then the fog would be shadowed by the hit
         // object
-        float fog_shadow = hit ? 1.0 - sqr(max0(dot(light_dir, ray_dir))) : 1.0;
+        float fog_shadow = 1.0 - sqr(max0(dot(light_dir, ray_dir)));
 #else
         const float fog_shadow = 1.0;
 #endif
 
         // Apply analytic fog in reflection
         mat2x3 analytic_fog = air_fog_analytic(
-            world_pos,
-            hit_pos_scene + cameraPosition,
-            false,
-            eye_skylight,
-            fog_shadow
+                world_pos,
+                hit_pos_scene + cameraPosition,
+                false,
+                eye_skylight,
+                fog_shadow
         );
 
         reflection = max0(reflection - fog_scattering_previous);
-        reflection = reflection * analytic_fog[1] + analytic_fog[0];
+        reflection * analytic_fog[1] + analytic_fog[0];
 #endif
 
-        return mix(sky_reflection, reflection, border_attenuation);
-    } else {
-        return sky_reflection;
+#if defined PH_USE_WSR
+        #define blend_color wsr_color.r >= 0.0f ? wsr_color : sky_reflection
+#else
+        #define blend_color sky_reflection
+#endif
+
+        return mix(blend_color, reflection, border_attenuation);
     }
+
+	return blend_color;
+#else
+    return sky_reflection;
+#endif
 }
 
 vec3 get_specular_reflections(
@@ -347,6 +569,7 @@ vec3 get_specular_reflections(
                 view_pos,
                 world_pos,
                 ray_dir,
+                flat_normal,
                 dither,
                 skylight,
                 SSR_INTERSECTION_STEPS_ROUGH,
@@ -372,7 +595,9 @@ vec3 get_specular_reflections(
             reflection += radiance * fresnel * (2.0 * NoL * v2 / v1);
         }
 
-        reflection *= albedo_tint * rcp(float(SSR_RAY_COUNT));
+        albedo_tint *= rcp(float(SSR_RAY_COUNT));
+
+        reflection *= albedo_tint;
         if (any(isnan(reflection))) {
             reflection = vec3(0.0); // don't reflect NaNs
         }
@@ -414,6 +639,7 @@ vec3 get_specular_reflections(
         view_pos,
         world_pos,
         ray_dir,
+        flat_normal,
         dither,
         skylight,
         SSR_INTERSECTION_STEPS_SMOOTH,

@@ -166,6 +166,10 @@ vec3 light_color, ambient_color;
 #include "/include/lighting/directional_lightmaps.glsl"
 #endif
 
+#if defined PROGRAM_GBUFFERS_WATER && defined PHOTONICS_IN_USE
+#define PHOTONICS_REFLECTIONS
+#endif
+
 #include "/include/fog/simple_fog.glsl"
 #include "/include/lighting/diffuse_lighting.glsl"
 #include "/include/lighting/shadows/pcss.glsl"

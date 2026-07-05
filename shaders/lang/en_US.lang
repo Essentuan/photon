@@ -552,8 +552,13 @@ suffix.POM_DISTANCE                    = m
 value.TEXTURE_FORMAT.TEXTURE_FORMAT_LAB = labPBR
 value.TEXTURE_FORMAT.TEXTURE_FORMAT_OLD = Old PBR
 
-option.ENVIRONMENT_REFLECTIONS         = Environment Reflections
-option.ENVIRONMENT_REFLECTIONS.comment = Screen-space reflections. Makes water and shiny blocks reflect their environment. Big performance impact
+option.ENVIRONMENT_REFLECTIONS_MODE   = Environmental Reflections
+option.ENVIRONMENT_REFLECTIONS_MODE.comment = Makes water and shiny blocks reflect their environment. Big performance impact
+
+value.ENVIRONMENT_REFLECTIONS_MODE.0   = Off
+value.ENVIRONMENT_REFLECTIONS_MODE.1   = Screen Space
+value.ENVIRONMENT_REFLECTIONS_MODE.2   = World Space
+
 option.SKY_REFLECTIONS                 = Sky Reflections
 option.SKY_REFLECTIONS.comment         = Makes water and shiny blocks reflect the sky
 option.SSR_ROUGHNESS_SUPPORT           = Roughness Support

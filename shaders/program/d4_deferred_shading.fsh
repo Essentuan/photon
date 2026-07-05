@@ -162,6 +162,7 @@ const bool colortex11MipmapEnabled = true;
 
 #ifdef PHOTONICS_IN_USE
 #define PHOTONICS_DIFFUSE
+#define PHOTONICS_REFLECTIONS
 #endif
 
 #include "/include/fog/simple_fog.glsl"
