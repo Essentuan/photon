@@ -19,7 +19,6 @@
           "type": "float",
           "value": 1.0
         },
-        "auto_exposure": true,
         "inputs": {
           "color": {
             "enabled": true,
@@ -38,7 +37,7 @@
           },
           "exposure": {
             "enabled": true,
-            "src": "colortex17",
+            "src": "autotex17",
             "region": [0, 0, 1, 1]
           }
         },
