@@ -212,15 +212,14 @@ vec3 get_sky_reflection(vec3 ray_dir, float skylight, vec3 hit_pos) {
 #define SPECULAR_SSR_HIT 1
 #define SPECULAR_WSR_HIT 2
 
-void trace_ssr_reflection(
+bool trace_ssr_reflection(
     vec3 screen_pos,
     vec3 view_pos,
     vec3 ray_dir,
     float dither,
     uint intersection_step_count,
     uint refinement_step_count,
-    out vec3 hit_pos_scene,
-    inout int hit_type
+    inout vec3 hit_pos_scene
 ) {
     vec3 view_dir = mat3(gbufferModelView) * ray_dir;
 
@@ -235,7 +234,7 @@ void trace_ssr_reflection(
             ssr_screen_pos
     );
 
-    if (!ssr_hit) return;
+    if (!ssr_hit) return false;
 
     vec3 ssr_pos_view = screen_to_view_space(
         SSRT_PROJECTION_MATRIX_INVERSE,
@@ -244,7 +243,7 @@ void trace_ssr_reflection(
     );
 
     hit_pos_scene = view_to_scene_space(ssr_pos_view);
-    hit_type = SPECULAR_SSR_HIT;
+    return true;
 }
 
 float border_attenuation_factor(vec3 hit_pos) {
@@ -290,8 +289,7 @@ vec3 trace_wsr_reflection(
     vec3 flat_normal,
 
     out vec4 tint,
-    out vec3 hit_pos_scene,
-    inout int hit_type
+    out vec3 hit_pos_scene
 ) {
     RayIterator itr;
     ray_iter_begin(
@@ -384,18 +382,10 @@ vec3 trace_wsr_reflection(
             continue;
         }
 
-        hit_type = SPECULAR_WSR_HIT;
         return mix(color, tint.rgb, tint.a);
     }
 
     return vec3(-1.0f);
-}
-
-bool should_wsr_trace(vec3 hit_scene_pos, int hit_type) {
-    if (hit_type == SPECULAR_NO_HIT) return true;
-
-    float border_attenuation = border_attenuation_factor(hit_scene_pos);
-    return border_attenuation < 1.0f;
 }
 #endif
 
@@ -411,43 +401,20 @@ vec3 trace_specular_ray(
     uint refinement_step_count,
     int mip_level
 ) {
-    int hit_type = SPECULAR_NO_HIT;
-
-#ifndef ENVIRONMENT_REFLECTIONS
-    const vec3 hit_pos_scene = vec3(0.0f);
-    const vec3 wsr_color = vec3(0.0f);
-#else
+#ifdef ENVIRONMENT_REFLECTIONS
     vec3 hit_pos_scene;
 
-    trace_ssr_reflection(
-        screen_pos,
-        view_pos,
-        ray_dir,
-        dither,
-        intersection_step_count,
-        refinement_step_count,
-        hit_pos_scene,
-        hit_type
-    );
-
 #if defined PH_USE_WSR
-    vec3 wsr_color = vec3(-1.0f);
     vec4 tint_color = vec4(0.0f);
-
-    if (should_wsr_trace(hit_pos_scene, hit_type)) {
-        wsr_color = trace_wsr_reflection(
-            view_pos,
-            ray_dir,
-            flat_normal,
-            tint_color,
-            hit_pos_scene,
-            hit_type
-        );
-    }
+    vec3 wsr_color = trace_wsr_reflection(view_pos, ray_dir, flat_normal, tint_color, hit_pos_scene);
 #else
-    const vec3 wsr_color = vec3(0.0f);
     const vec4 tint_color = vec4(0.0f);
+    const vec3 wsr_color = vec3(-1.0f);
 #endif
+
+    if (wsr_color.r >= 0.0f) return wsr_color;
+
+    bool ssr_hit = trace_ssr_reflection(screen_pos, view_pos, ray_dir, dither, intersection_step_count, refinement_step_count, hit_pos_scene);
 
 #ifdef SKY_REFLECTIONS
 #if defined PH_USE_WSR
@@ -459,13 +426,8 @@ vec3 trace_specular_ray(
     const vec3 sky_reflection = vec3(0.0);
 #endif
 
-    if (hit_type == SPECULAR_NO_HIT) {
-        return sky_reflection;
-    }
-
-    vec3 hit_uv_prev = reproject_scene_space(hit_pos_scene, false, false);
-
-    if (clamp01(hit_uv_prev) == hit_uv_prev) {
+    if (ssr_hit) {
+        vec3 hit_uv_prev = reproject_scene_space(hit_pos_scene, false, false);
         float border_attenuation = border_attenuation_factor(hit_pos_scene);
 
         vec3 reflection = textureLod(colortex5, hit_uv_prev.xy, mip_level).rgb;
@@ -495,18 +457,12 @@ vec3 trace_specular_ray(
         reflection * analytic_fog[1] + analytic_fog[0];
 #endif
 
-#if defined PH_USE_WSR
-        #define blend_color wsr_color.r >= 0.0f ? wsr_color : sky_reflection
-#else
-        #define blend_color sky_reflection
-#endif
-
-        return mix(blend_color, reflection, border_attenuation);
+        return mix(sky_reflection, reflection, border_attenuation);
     }
 
-	return blend_color;
-#else
     return sky_reflection;
+#else
+    return get_sky_reflection(ray_dir, skylight, vec3(0.0f));
 #endif
 }
 
