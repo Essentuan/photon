@@ -666,6 +666,7 @@ option.tonemap                         = Tonemap Operator
 
 value.tonemap.tonemap_aces_fit         = ACES Fit
 value.tonemap.tonemap_aces_full        = ACES Full
+value.tonemap.tonemap_agx              = AgX
 value.tonemap.tonemap_hejl_2015        = Hejl 2015
 value.tonemap.tonemap_hejl_burgess     = Hejl-Burgess
 value.tonemap.tonemap_lottes           = Lottes
@@ -676,6 +677,11 @@ value.tonemap.tonemap_reinhard         = Reinhard
 value.tonemap.tonemap_reinhard_jodie   = Reinhard-Jodie
 
 # Color Grading
+
+option.AGX_LOOK                        = Agx Look
+value.AGX_LOOK.0                       = Default
+value.AGX_LOOK.1                       = Golden
+value.AGX_LOOK.2                       = Punchy
 
 option.GRADE_BRIGHTNESS                = Brightness
 option.GRADE_CONTRAST                  = Contrast
