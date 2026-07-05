@@ -3,6 +3,9 @@ uniform float worldTime;
 
 uniform sampler2D colortex4;
 
+#include "/include/sky/projection.glsl"
+#include "/include/utility/bicubic.glsl"
+
 const float blocklight_scale = 6.0f;
 const float rcp_blocklight_scale = 1.0f /blocklight_scale;
 
@@ -24,7 +27,7 @@ vec3 get_light_color() {
 
 vec3 get_sky_color(vec3 player_pos, vec3 direction) {
     const float sun_inverse = 1.0f / SUN_I;
-    return get_light_color() * sun_inverse * SKYLIGHT_I * 0.5f;
+    return bicubic_filter(colortex4, project_sky(direction)).rgb * sun_inverse *  SKYLIGHT_I;
 }
 
 vec3 get_sun_color(vec3 player_pos, vec3 directioin) {
