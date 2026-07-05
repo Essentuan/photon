@@ -23,6 +23,10 @@ flat out float histogram_selected_bin;
 uniform sampler2D colortex0; // Scene color
 uniform sampler2D colortex5; // Scene history
 
+#if defined SUPER_RES_ENABLED
+uniform sampler2D colortex17; // Scene history
+#endif
+
 uniform float frameTime;
 uniform float screenBrightness;
 
@@ -141,7 +145,12 @@ void main() {
 #if AUTO_EXPOSURE == AUTO_EXPOSURE_OFF
     exposure = get_exposure_from_ev_100(manual_exposure_value);
 #else
+
+#if defined SUPER_RES_ENABLED
+    float previous_exposure = texelFetch(colortex17, ivec2(0), 0).r;
+#else
     float previous_exposure = texelFetch(colortex5, ivec2(0), 0).a;
+#endif
 
 #if AUTO_EXPOSURE == AUTO_EXPOSURE_SIMPLE
     float lod = ceil(log2(max_of(view_res)));

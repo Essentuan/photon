@@ -29,6 +29,10 @@ uniform sampler2D colortex0; // bloom tiles
 uniform sampler2D colortex3; // fog transmittance
 uniform sampler2D colortex5; // scene color
 
+#if defined SUPER_RES_ENABLED
+uniform sampler2D colortex17; // exposure history
+#endif
+
 uniform float aspectRatio;
 uniform float blindness;
 uniform float darknessFactor;
@@ -149,7 +153,11 @@ void main() {
 
     scene_color = texelFetch(colortex5, texel, 0).rgb;
 
+#if defined SUPER_RES_ENABLED
+    float exposure = texelFetch(colortex17, ivec2(0), 0).r;
+#else
     float exposure = texelFetch(colortex5, ivec2(0), 0).a;
+#endif
 
 #ifdef BLOOM
     vec3 bloom = get_bloom();

@@ -14,7 +14,12 @@
 layout(location = 0) out vec3 bloom_input;
 layout(location = 1) out vec4 result;
 
-/* RENDERTARGETS: 0,5 */
+#if defined SUPER_RES_ENABLED
+layout(location = 2) out vec4 motion_vectors;
+layout(location = 3) out float exposure_history;
+#endif
+
+/* RENDERTARGETS: 0,5,13,17 */
 
 in vec2 uv;
 
@@ -269,6 +274,7 @@ void draw_histogram(ivec2 texel) {
 #endif
 
 void main() {
+#if !defined SUPER_RES_ENABLED
     ivec2 texel = ivec2(gl_FragCoord.xy * taau_render_scale);
 
 #ifdef TAA
@@ -379,12 +385,42 @@ void main() {
 #else // TAA disabled
     result = texelFetch(colortex0, texel, 0);
 #endif
+#else
+    ivec2 texel = ivec2(gl_FragCoord.xy);
+
+    result = texelFetch(colortex0, texel, 0);
+
+#ifndef LOD_MOD_ACTIVE
+    vec3 closest = get_closest_fragment(depthtex0, texel);
+
+    const bool is_lod = false;
+#else
+    vec3 closest = get_closest_fragment(depthtex0, texel);
+    vec3 closest_lod = get_closest_fragment(lod_depth_tex, texel);
+
+    bool is_lod = is_lod_terrain(closest.z, closest_lod.z);
+
+    closest = is_lod ? closest_lod : closest;
+#endif
+
+    vec3 closest_view = screen_to_view_space(closest, false, is_lod);
+    vec3 closest_scene = view_to_scene_space(closest_view);
+
+    bool hand = closest.z < hand_depth;
+
+    motion_vectors.rg = reproject_scene_space(closest_scene, hand, is_lod).xy - closest.xy;
+#endif
 
     // Store exposure in the alpha component of the bottom left texel of the
     // history buffer
     if (texel == ivec2(0)) {
+#if defined SUPER_RES_ENABLED
+        exposure_history = exposure;
+#else
         result.a = exposure;
+#endif
     }
+
 
 #if AUTO_EXPOSURE == AUTO_EXPOSURE_HISTOGRAM \
     && DEBUG_VIEW == DEBUG_VIEW_HISTOGRAM

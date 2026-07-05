@@ -586,6 +586,17 @@ const float wetnessHalflife         = 70.0;
 
 // Super Resolution
 
+#if defined SR_INSTALLED && SR_ENABLE == 1
+#define SUPER_RES_ENABLED
+
+#define TAA
+#define TAAU
+#define TAAU_RENDER_SCALE SR_RENDER_SCALE_FACTOR
+
+#define CAS_INTENSITY 0.0f
+
+#else
+
 #ifdef USER_TAA
 #define TAA
 #endif
@@ -605,6 +616,8 @@ const float wetnessHalflife         = 70.0;
 #endif
 
 #define CAS_INTENSITY USER_CAS_INTENSITY
+
+#endif
 
 // Photonics
 
