@@ -13,6 +13,7 @@
           "pass": "composite5"
         },
         "motion_jittered": false,
+		"auto_exposure": true,
         "hdr": true,
         "pre_exposure": {
           "source": "const",
@@ -34,11 +35,6 @@
             "enabled": true,
             "src": "autotex13",
             "region": [0, 0, -1, -1]
-          },
-          "exposure": {
-            "enabled": true,
-            "src": "autotex17",
-            "region": [0, 0, 1, 1]
           }
         },
         "outputs": {
