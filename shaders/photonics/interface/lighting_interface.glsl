@@ -3,6 +3,10 @@ uniform float worldTime;
 
 uniform sampler2D colortex4;
 
+#if defined WORLD_OVERWORLD && defined CLOUD_SHADOWS
+uniform sampler2D colortex8;
+#endif
+
 #include "/include/sky/projection.glsl"
 #include "/include/utility/bicubic.glsl"
 
@@ -31,7 +35,13 @@ vec3 get_sky_color(vec3 player_pos, vec3 direction) {
 }
 
 vec3 get_sun_color(vec3 player_pos, vec3 directioin) {
-    return get_light_color() * BOUNCED_LIGHT_I * 4.0f;
+#if defined WORLD_OVERWORLD && defined CLOUD_SHADOWS
+    float cloud_shadows = get_cloud_shadows(colortex8, player_pos);
+#else
+    const float cloud_shadows = 1.0;
+#endif
+
+    return get_light_color() * BOUNCED_LIGHT_I * 4.0f * cloud_shadows;
 }
 
 #if defined OVERWORLD
