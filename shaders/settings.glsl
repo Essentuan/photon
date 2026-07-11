@@ -634,7 +634,6 @@ const float wetnessHalflife         = 70.0;
   #define PHOTONICS_RESTIR_DENOISER_PASSES 5 // [0 1 2 3 4 5]
   #define PHOTONICS_RESTIR_SOFT_SHADOWS
 //#define PHOTONICS_RESTIR_COMBINED_GI
-//#define PHOTONICS_PRESERVE_NORMAL_DETAIL
 
 // The settings parser only detects boolean options which are used with
 // #ifdef; it doesn't look for #if defined or other settings usages (e.g in

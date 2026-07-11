@@ -822,7 +822,6 @@ option.PHOTONICS_RESTIR_SPR_RADIUS        = Spatial Reuse Radius
 option.PHOTONICS_RESTIR_ACCUMULATION      = Accumulation Frames
 option.PHOTONICS_RESTIR_ACCUMULATION.comment = The max number of frames ReSTIR uses for accumulation. Lower values will cause lighting to be more responsive, at the cost of more noise.
 option.PHOTONICS_RESTIR_DENOISER_PASSES   = Denoiser Passes
-option.PHOTONICS_PRESERVE_NORMAL_DETAIL   = Preserve Normal Detail
 option.PHOTONICS_RESTIR_SOFT_SHADOWS      = Soft Shadows
 option.PHOTONICS_RESTIR_COMBINED_GI       = ReSTIR GI
 option.PHOTONICS_RESTIR_COMBINED_GI.comment = Whether Gi should be gone through its own iteration of ReSTIR.
