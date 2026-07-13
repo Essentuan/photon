@@ -18,7 +18,7 @@ bool raymarch_shadow(
     out float sss_depth
 ) {
     const uint step_count = uint(SHADOW_SSRT_STEPS);
-    const float step_ratio = 2.0; // geometric sample distribution
+    const float step_ratio = 1.0; // geometric sample distribution
     const float z_tolerance = 10.0; // assumed thickness in blocks
 
     vec3 ray_dir_screen = normalize(
@@ -122,7 +122,7 @@ float get_screen_space_shadows(
     dither = r1(frameCounter, dither);
 
     // Slightly randomise ray direction to create soft shadows
-    vec2 hash = hash2(gl_FragCoord.xy);
+    vec2 hash = hash2(gl_FragCoord.xy + frameCounter);
     vec3 ray_dir
         = normalize(view_light_dir + 0.03 * uniform_sphere_sample(hash));
 
