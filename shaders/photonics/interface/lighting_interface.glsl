@@ -41,7 +41,7 @@ vec3 get_sun_color(vec3 player_pos, vec3 d, int bounce) {
     const float cloud_shadows = 1.0;
 #endif
 
-    return get_light_color() * (BOUNCED_LIGHT_I * (bounce == 0 ? 4.0f : 1.0f) * cloud_shadows);
+    return get_light_color() * (BOUNCED_LIGHT_I * (bounce == 0 ? 1.25f : 0.5f) * cloud_shadows);
 }
 
 #if defined OVERWORLD
