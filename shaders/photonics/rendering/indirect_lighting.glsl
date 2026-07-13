@@ -58,13 +58,6 @@ void prepare_next_gi_ray(
     ray_iter_offset_position(ray, ray.direction * 0.03f);
 }
 
-vec3 saturate_colors(vec3 color, float saturation) {
-    if (saturation == 1.0) return color;
-	
-    float brightness = max_of(color);
-    return max0((color - brightness) * saturation + brightness);
-}
-
 void sample_indirect(
         inout vec3 indirect_color,
         vec3 sample_rt_pos,

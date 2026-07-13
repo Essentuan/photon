@@ -6,6 +6,13 @@ uniform sampler2D colortex4;
 #include "/include/sky/projection.glsl"
 #include "/include/utility/bicubic.glsl"
 
+vec3 saturate_colors(vec3 color, float saturation) {
+    if (saturation == 1.0) return color;
+	
+    float brightness = max_of(color);
+    return max0((color - brightness) * saturation + brightness);
+}
+
 #if defined WORLD_OVERWORLD || defined WORLD_END
 #include "/photonics/interface/is_in_shadow.glsl"
 #else
@@ -35,7 +42,7 @@ vec3 get_light_color() {
 
 vec3 get_sky_color(vec3 player_pos, vec3 direction, int bounce) {
     const float sun_inverse = 1.0f / SUN_I;
-    return bicubic_filter(colortex4, project_sky(direction)).rgb * sun_inverse *  SKYLIGHT_I;
+    return saturate_colors(bicubic_filter(colortex4, project_sky(direction)).rgb * sun_inverse * SKYLIGHT_I, 0.7f);
 }
 
 vec3 get_sun_color(vec3 player_pos, vec3 d, int bounce) {
@@ -45,7 +52,7 @@ vec3 get_sun_color(vec3 player_pos, vec3 d, int bounce) {
     const float cloud_shadows = 1.0;
 #endif
 
-    return get_light_color() * (BOUNCED_LIGHT_I * (bounce == 0 ? 1.25f : 0.5f) * cloud_shadows);
+    return get_light_color() * (BOUNCED_LIGHT_I * (bounce == 0 ? 1.7f : 0.5f) * cloud_shadows);
 }
 
 bool sample_sun_color(vec3 scene_pos, vec3 geo_normal, inout vec3 sun_color) {
