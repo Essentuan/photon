@@ -29,19 +29,19 @@ vec3 get_light_color() {
 #endif
 }
 
-vec3 get_sky_color(vec3 player_pos, vec3 direction) {
+vec3 get_sky_color(vec3 player_pos, vec3 direction, int bounce) {
     const float sun_inverse = 1.0f / SUN_I;
     return bicubic_filter(colortex4, project_sky(direction)).rgb * sun_inverse *  SKYLIGHT_I;
 }
 
-vec3 get_sun_color(vec3 player_pos, vec3 directioin) {
+vec3 get_sun_color(vec3 player_pos, vec3 d, int bounce) {
 #if defined WORLD_OVERWORLD && defined CLOUD_SHADOWS
     float cloud_shadows = get_cloud_shadows(colortex8, player_pos);
 #else
     const float cloud_shadows = 1.0;
 #endif
 
-    return get_light_color() * BOUNCED_LIGHT_I * 4.0f * cloud_shadows;
+    return get_light_color() * (BOUNCED_LIGHT_I * (bounce == 0 ? 4.0f : 1.0f) * cloud_shadows);
 }
 
 #if defined OVERWORLD
