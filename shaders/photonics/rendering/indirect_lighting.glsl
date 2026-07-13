@@ -126,22 +126,13 @@ void sample_indirect(
 
 #if defined PH_ENABLE_BLOCKLIGHT_GI
             #define PH_SHOULD_SAMPLE_LIGHT (bounce_count != -1 || hit_light.type == LIGHT_TYPE_NOT_TRACED)
-            const float gi_light_multiplier = 6.7f;
 #else
             #define PH_SHOULD_SAMPLE_LIGHT hit_light.type == LIGHT_TYPE_NOT_TRACED
-            const float gi_light_multiplier = 3.0f;
 #endif
 
             Light hit_light = ray_result_light_data(hit);
-            if (light_is_valid(hit_light) && PH_SHOULD_SAMPLE_LIGHT) {
-                radiance_color += light_sample_at(
-                    hit_light,
-                    sample_rt_pos,
-                    floor(ray_result_position(hit)) + 0.5f,
-                    geo_normal,
-                    geo_normal
-                ) * gi_light_multiplier;
-            }
+            if (light_is_valid(hit_light) && PH_SHOULD_SAMPLE_LIGHT)
+                radiance_color += hit_light.color;
 #else
             modify_indirect_surface_sample(
                 hit,

@@ -5,8 +5,10 @@
 #define SHADOW
 
 uniform sampler2D noisetex;
+uniform int moonPhase;
 
 uniform mat4 shadowModelView;
+uniform mat4 shadowModelViewInverse;
 uniform mat4 shadowProjection;
 uniform mat4 shadowProjectionInverse;
 uniform sampler2D shadowtex0;
