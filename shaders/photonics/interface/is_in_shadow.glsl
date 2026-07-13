@@ -15,6 +15,13 @@ uniform sampler2DShadow shadowtex1;
 #include "/include/utility/fast_math.glsl"
 #include "/include/lighting/shadows/pcss.glsl"
 
+#ifdef CLOUD_SHADOWS
+uniform sampler2D colortex8;
+uniform float eyeAltitude;
+
+#include "/include/lighting/cloud_shadows.glsl"
+#endif
+
 bool is_in_shadow_at(vec3 scene_pos, vec3 geo_normal) {
     float distance_fade = 0f;
     float sss_depth = 0f;

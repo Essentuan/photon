@@ -1,3 +1,11 @@
+#if defined OVERWORLD
+#define WORLD_OVERWORLD
+#elif defined NETHER
+#define WORLD_NETHER
+#elif defined END
+#define WORLD_END
+#endif
+
 #include "/include/global.glsl"
 
 uniform sampler2D colortex1;
