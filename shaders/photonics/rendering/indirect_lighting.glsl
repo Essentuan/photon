@@ -132,7 +132,7 @@ void sample_indirect(
             VoxelData voxel_data = ray_result_voxel_data(hit);
             albedo = voxel_data_albedo(voxel_data);
 
-            if (albedo.a < 1.0f) {
+            if (ray_result_is_transparent(hit)) {
                 // Multiply alpha by 0.25 as it looks better with glass
                 running_light_transmittance *= 1.0f - (albedo.a * 0.25f);
                 ray_iter_apply_transparency(running_tint_color, albedo);
@@ -154,6 +154,8 @@ void sample_indirect(
             if (dot(get_sun_direction(), hit_normal) >= -0.05f) {
                 is_tracing_to_sun = !sample_sun_color(hit_position - rt_camera_position, hit_normal, radiance_color)
                     && ph_rand_next_float(rnd_state) < 0.6f;
+
+                radiance_color *= albedo.rgb;
             }
 #endif
         } else { // Hit sky
