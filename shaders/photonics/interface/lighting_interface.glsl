@@ -34,19 +34,19 @@ vec3 get_light_color() {
 #endif
 }
 
-vec3 get_sky_color(vec3 player_pos, vec3 direction, int bounce) {
+vec3 get_sky_color(vec3 player_pos, vec3 direction) {
     const float sun_inverse = 1.0f / SUN_I;
     return saturate_colors(bicubic_filter(colortex4, project_sky(direction)).rgb * sun_inverse * SKYLIGHT_I, 0.7f);
 }
 
-vec3 get_sun_color(vec3 player_pos, vec3 d, int bounce) {
+vec3 get_sun_color(vec3 player_pos, vec3 d) {
 #if defined WORLD_OVERWORLD && defined CLOUD_SHADOWS
     float cloud_shadows = get_cloud_shadows(colortex8, player_pos);
 #else
     const float cloud_shadows = 1.0;
 #endif
 
-    return get_light_color() * (BOUNCED_LIGHT_I * (bounce == 0 ? 1.7f : 0.5f) * cloud_shadows);
+    return get_light_color() * (BOUNCED_LIGHT_I * cloud_shadows);
 }
 
 bool sample_sun_color(vec3 scene_pos, vec3 geo_normal, inout vec3 sun_color) {

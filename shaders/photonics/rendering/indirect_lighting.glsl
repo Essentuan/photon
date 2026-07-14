@@ -103,16 +103,13 @@ void sample_indirect(
 
             first_hit = hit_position;
             first_normal = hit_normal;
-            albedo.rgb = saturate_colors(albedo.rgb, 1.3f);
 
             is_tracing_to_sun = false;
 
 #if !defined NO_SHADOW_MAPPING
-            if (dot(get_sun_direction(), hit_normal) >= -0.01f) {
+            if (dot(get_sun_direction(), hit_normal) >= -0.05f) {
                 is_tracing_to_sun = !sample_sun_color(hit_position - rt_camera_position, hit_normal, radiance_color)
                     && ph_rand_next_float(rnd_state) < 0.6f;
-
-                radiance_color *= albedo.rgb;
             }
 #endif
 
@@ -140,8 +137,10 @@ void sample_indirect(
             );
 #endif
         } else { // Hit sky
+            ray.iterations = 0;
+
             vec3 player_pos = hit_position - rt_camera_position;
-            radiance_color = is_tracing_to_sun ? get_sun_color(player_pos, ray.direction, bounce) : get_sky_color(player_pos, ray.direction, bounce);
+            radiance_color = is_tracing_to_sun ? get_sun_color(player_pos, ray.direction) : get_sky_color(player_pos, ray.direction);
 
             first_hit = vec3(-1.0f);
             first_normal = -ray.direction;
@@ -158,6 +157,7 @@ void sample_indirect(
         running_bounce_color *= albedo.rgb;
         sample_rt_pos = hit_position;
         geo_normal = hit_normal;
+
         prepare_next_gi_ray(ray, rnd_state, bounce, sample_rt_pos, geo_normal, is_tracing_to_sun);
     }
 }
