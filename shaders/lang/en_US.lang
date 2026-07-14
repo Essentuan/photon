@@ -825,6 +825,10 @@ option.PHOTONICS_RESTIR_DENOISER_PASSES   = Denoiser Passes
 option.PHOTONICS_RESTIR_SOFT_SHADOWS      = Soft Shadows
 option.PHOTONICS_RESTIR_COMBINED_GI       = ReSTIR GI
 option.PHOTONICS_RESTIR_COMBINED_GI.comment = Whether Gi should be gone through its own iteration of ReSTIR.
-option.PHOTONICS_RESTIR_GI_DO_DIRECT      = Do direct in GI
+
+option.PHOTONICS_RESTIR_DIRECT_MODE       = Direct Lighting Mode
+value.PHOTONICS_RESTIR_DIRECT_MODE.0      = ReSTIR DI
+value.PHOTONICS_RESTIR_DIRECT_MODE.1      = ReSTIR GI (Shader Values)
+value.PHOTONICS_RESTIR_DIRECT_MODE.2      = ReSTIR GI (PBR)
 
 

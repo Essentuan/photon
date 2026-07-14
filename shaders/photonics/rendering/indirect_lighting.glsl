@@ -55,6 +55,46 @@ void prepare_next_gi_ray(
     ray_iter_offset_position(ray, ray.direction * 0.03f);
 }
 
+#if PHOTONICS_RESTIR_DIRECT_MODE == 0
+
+vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) {
+#if !defined PH_ENABLE_BLOCKLIGHT_GI
+    if (bounce != -1) return vec3(0.0f);
+    #define bounce_check false
+#else
+    #define bounce_check bounce != -1
+#endif
+
+    Light hit_light = ray_result_light_data(hit);
+    return light_is_valid(hit_light) && (bounce_check || hit_light.type == LIGHT_TYPE_NOT_TRACED) ? hit_light.color : vec3(0.0f);
+}
+
+#elif PHOTONICS_RESTIR_DIRECT_MODE == 1
+
+vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) {
+#if !defined PH_ENABLE_BLOCKLIGHT_GI
+    if (bounce != -1) return vec3(0.0f);
+#endif
+
+    Light hit_light = ray_result_light_data(hit);
+    return light_is_valid(hit_light) ? hit_light.color : vec3(0.0f);
+}
+
+#elif PHOTONICS_RESTIR_DIRECT_MODE == 2
+
+vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) {
+#if !defined PH_ENABLE_BLOCKLIGHT_GI
+    if (bounce != -1) return vec3(0.0f);
+#endif
+
+    float emission = voxel_data_specular(voxel_data).a;
+    emission = emission == 1.0f ? 0.0f : emission;
+
+    return albedo.rgb * emission * BLOCKLIGHT_I * 10.0f;
+}
+
+#endif
+
 void sample_indirect(
         inout vec3 indirect_color,
         vec3 sample_rt_pos,
@@ -89,7 +129,8 @@ void sample_indirect(
         vec3 radiance_color = vec3(0.0f);
 
         if (ray_result_is_hit(hit)) { // Hit something
-            albedo = voxel_data_albedo(ray_result_voxel_data(hit));
+            VoxelData voxel_data = ray_result_voxel_data(hit);
+            albedo = voxel_data_albedo(voxel_data);
 
             if (albedo.a < 1.0f) {
                 // Multiply alpha by 0.25 as it looks better with glass
@@ -106,6 +147,8 @@ void sample_indirect(
                 first_normal = hit_normal;
             }
 
+            radiance_color+= sample_light(hit, albedo, voxel_data, bounce);
+
 			albedo.rgb = saturate_colors(albedo.rgb, 1.3f);
             is_tracing_to_sun = false;
 
@@ -114,30 +157,6 @@ void sample_indirect(
                 is_tracing_to_sun = !sample_sun_color(hit_position - rt_camera_position, hit_normal, radiance_color)
                     && ph_rand_next_float(rnd_state) < 0.6f;
             }
-#endif
-
-#if !defined PH_ENABLE_BLOCKLIGHT_GI
-            #define PH_SHOULD_SAMPLE_LIGHT hit_light.type == LIGHT_TYPE_NOT_TRACED
-#elif !defined PHOTONICS_RESTIR_GI_DO_DIRECT
-            #define PH_SHOULD_SAMPLE_LIGHT (bounce != -1 || hit_light.type == LIGHT_TYPE_NOT_TRACED)
-#else
-            #define PH_SHOULD_SAMPLE_LIGHT true
-#endif
-
-#if defined PH_INDIRECT_SURFACE_SAMPLE_MODIFIER_DISABLED
-            Light hit_light = ray_result_light_data(hit);
-            if (light_is_valid(hit_light) && PH_SHOULD_SAMPLE_LIGHT)
-                radiance_color += hit_light.color;
-#else
-            modify_indirect_surface_sample(
-                    hit,
-                    sample_rt_pos,
-                    geo_normal,
-                    bounce,
-                    rnd_state,
-
-                    radiance_color
-            );
 #endif
         } else { // Hit sky
             ray.iterations = 0;

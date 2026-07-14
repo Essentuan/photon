@@ -620,7 +620,6 @@ const float wetnessHalflife         = 70.0;
   #define PHOTONICS_MAX_LIGHTS 1000 // [250 300 350 500 550 700 750 1000 1500 2000 2500 3000 3500 4000]
   #define PHOTONICS_MAX_GI_BOUNCES 1 // [1 2 3 4]
   //#define PHOTONICS_BLOCKLIGHT_GI
-  //#define PHOTONICS_RESTIR_GI_DO_DIRECT
   #define PHOTONICS_GLINT_STRENGTH 0.2 // [0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
   #define PHOTONICS_TWO_HANDHELD_RAYS
 
@@ -635,6 +634,7 @@ const float wetnessHalflife         = 70.0;
   #define PHOTONICS_RESTIR_DENOISER_PASSES 5 // [0 1 2 3 4 5 6 7]
   #define PHOTONICS_RESTIR_SOFT_SHADOWS
 //#define PHOTONICS_RESTIR_COMBINED_GI
+  #define PHOTONICS_RESTIR_DIRECT_MODE 0 // [0 1 2]
 
 // The settings parser only detects boolean options which are used with
 // #ifdef; it doesn't look for #if defined or other settings usages (e.g in
@@ -706,9 +706,6 @@ const float wetnessHalflife         = 70.0;
 
 #if ENVIRONMENT_REFLECTIONS_MODE > 1
 #define PHOTONICS_WORLD_SPACE_REFLECTIONS
-#endif
-
-#ifdef PHOTONICS_RESTIR_GI_DO_DIRECT
 #endif
 
 #endif // SETTINGS_INCLUDED
