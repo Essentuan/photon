@@ -5,13 +5,7 @@ uniform sampler2D colortex4;
 
 #include "/include/sky/projection.glsl"
 #include "/include/utility/bicubic.glsl"
-
-vec3 saturate_colors(vec3 color, float saturation) {
-    if (saturation == 1.0) return color;
-	
-    float brightness = max_of(color);
-    return max0((color - brightness) * saturation + brightness);
-}
+#include "/include/utility/color.glsl"
 
 #if defined WORLD_OVERWORLD || defined WORLD_END
 #include "/photonics/interface/is_in_shadow.glsl"

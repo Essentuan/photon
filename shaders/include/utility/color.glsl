@@ -207,4 +207,11 @@ float isolate_hue(vec3 hsl, float center, float width) {
     return pulse(hsl.x * 360.0, center, width, 360.0);
 }
 
+vec3 saturate_colors(vec3 color, float saturation) {
+    if (saturation == 1.0) return color;
+
+    float brightness = max_of(color);
+    return max0((color - brightness) * saturation + brightness);
+}
+
 #endif // INCLUDE_UTILITY_COLOR
