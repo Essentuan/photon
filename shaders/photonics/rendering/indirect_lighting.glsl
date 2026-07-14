@@ -122,28 +122,17 @@ void sample_indirect(
             }
 #endif
 
-#if defined PH_INDIRECT_SURFACE_SAMPLE_MODIFIER_DISABLED
-
-#if defined PH_ENABLE_BLOCKLIGHT_GI
-            #define PH_SHOULD_SAMPLE_LIGHT (bounce_count != -1 || hit_light.type == LIGHT_TYPE_NOT_TRACED)
+#if !defined PH_ENABLE_BLOCKLIGHT_GI
+    #define PH_SHOULD_SAMPLE_LIGHT hit_light.type == LIGHT_TYPE_NOT_TRACED
+#elif !defined PHOTONICS_RESTIR_GI_DO_DIRECT
+    #define PH_SHOULD_SAMPLE_LIGHT (bounce_count != -1 || hit_light.type == LIGHT_TYPE_NOT_TRACED)
 #else
-            #define PH_SHOULD_SAMPLE_LIGHT hit_light.type == LIGHT_TYPE_NOT_TRACED
+    #define PH_SHOULD_SAMPLE_LIGHT true
 #endif
 
             Light hit_light = ray_result_light_data(hit);
             if (light_is_valid(hit_light) && PH_SHOULD_SAMPLE_LIGHT)
                 radiance_color += hit_light.color;
-#else
-            modify_indirect_surface_sample(
-                hit,
-                sample_rt_pos,
-                geo_normal,
-                bounce_count,
-                rnd_state,
-
-                radiance_color
-            );
-#endif
         } else {
             ray.iterations = 0;
             vec3 player_pos = hit_position - rt_camera_position;

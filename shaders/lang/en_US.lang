@@ -825,5 +825,6 @@ option.PHOTONICS_RESTIR_DENOISER_PASSES   = Denoiser Passes
 option.PHOTONICS_RESTIR_SOFT_SHADOWS      = Soft Shadows
 option.PHOTONICS_RESTIR_COMBINED_GI       = ReSTIR GI
 option.PHOTONICS_RESTIR_COMBINED_GI.comment = Whether Gi should be gone through its own iteration of ReSTIR.
+option.PHOTONICS_RESTIR_GI_DO_DIRECT      = Do direct in GI
 
 
