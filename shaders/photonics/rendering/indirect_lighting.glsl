@@ -106,6 +106,7 @@ void sample_indirect(
                 first_normal = hit_normal;
             }
 
+			albedo.rgb = saturate_colors(albedo.rgb, 1.3f);
             is_tracing_to_sun = false;
 
 #if !defined NO_SHADOW_MAPPING
