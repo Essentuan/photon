@@ -23,7 +23,7 @@ vec3 get_sun_direction() {
 }
 
 vec3 get_sky_color(vec3 player_pos, vec3 direction) {
-    return bicubic_filter(colortex4, project_sky(direction)).rgb * SKYLIGHT_I;
+    return bicubic_filter(colortex4, project_sky(direction)).rgb * SKYLIGHT_I * rcp_blocklight_scale;
 }
 
 vec3 get_sun_color(vec3 player_pos, vec3 d) {

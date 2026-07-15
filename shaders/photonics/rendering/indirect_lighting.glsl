@@ -166,8 +166,6 @@ void sample_indirect(
                 first_hit = vec3(0.0f/0.0f);
                 first_normal = -ray.direction;
             }
-
-            is_tracing_to_sun = true;
         }
 
         #define gi_tint_color (running_tint_color != vec4(0.0) ? running_tint_color.rgb : vec3(1.0f))
@@ -176,7 +174,7 @@ void sample_indirect(
 
         indirect_color += radiance_color * gi_tint_color * gi_bounce_color * gi_intensity;
 
-        if (is_tracing_to_sun) return;
+        if (!ray_result_is_hit(hit)) return;
 
         running_bounce_color *= albedo.rgb;
         sample_rt_pos = hit_position;
