@@ -283,12 +283,13 @@ Material ray_result_to_material(
     return hit_material;
 }
 
-vec3 trace_wsr_reflection(
+bool trace_wsr_reflection(
     vec3 view_pos,
     vec3 ray_dir,
     vec3 flat_normal,
 
     out vec4 tint,
+    inout vec3 reflection,
     out vec3 hit_pos_scene
 ) {
     RayIterator itr;
@@ -382,10 +383,11 @@ vec3 trace_wsr_reflection(
             continue;
         }
 
-        return mix(color, tint.rgb, tint.a);
+        reflection = mix(color, tint.rgb, tint.a);
+        return true;
     }
 
-    return vec3(-1.0f);
+    return false;
 }
 #endif
 
@@ -404,17 +406,47 @@ vec3 trace_specular_ray(
 #ifdef ENVIRONMENT_REFLECTIONS
     vec3 hit_pos_scene;
 
+    vec3 reflection = vec3(0.0f);
+    bool has_reflection = false;
+
+    vec3 fog_scattering_previous = vec3(0.0f);
+    float border_attenuation = 1.0f;
+
 #if defined PH_USE_WSR
     vec4 tint_color = vec4(0.0f);
-    vec3 wsr_color = trace_wsr_reflection(view_pos, ray_dir, flat_normal, tint_color, hit_pos_scene);
+
+    has_reflection = trace_wsr_reflection(
+            view_pos,
+            ray_dir,
+            flat_normal,
+
+            tint_color,
+            reflection,
+            hit_pos_scene
+    );
 #else
     const vec4 tint_color = vec4(0.0f);
-    const vec3 wsr_color = vec3(-1.0f);
 #endif
 
-    if (wsr_color.r >= 0.0f) return wsr_color;
+    if (!has_reflection) {
+        has_reflection = trace_ssr_reflection(
+                screen_pos,
+                view_pos,
+                ray_dir,
+                dither,
+                intersection_step_count,
+                refinement_step_count,
+                hit_pos_scene
+        );
 
-    bool ssr_hit = trace_ssr_reflection(screen_pos, view_pos, ray_dir, dither, intersection_step_count, refinement_step_count, hit_pos_scene);
+        if (has_reflection) {
+            vec3 hit_uv_prev = reproject_scene_space(hit_pos_scene, false, false);
+            border_attenuation = border_attenuation_factor(hit_pos_scene);
+
+            reflection = textureLod(colortex5, hit_uv_prev.xy, mip_level).rgb;
+            fog_scattering_previous = texture(colortex7, hit_uv_prev.xy).rgb;
+        }
+    }
 
 #ifdef SKY_REFLECTIONS
 #if defined PH_USE_WSR
@@ -426,13 +458,7 @@ vec3 trace_specular_ray(
     const vec3 sky_reflection = vec3(0.0);
 #endif
 
-    if (ssr_hit) {
-        vec3 hit_uv_prev = reproject_scene_space(hit_pos_scene, false, false);
-        float border_attenuation = border_attenuation_factor(hit_pos_scene);
-
-        vec3 reflection = textureLod(colortex5, hit_uv_prev.xy, mip_level).rgb;
-        vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev.xy).rgb;
-
+    if (has_reflection) {
 #if defined WORLD_OVERWORLD
 #ifdef VL
         // Intended to make reflected fog better match VL
@@ -454,7 +480,7 @@ vec3 trace_specular_ray(
         );
 
         reflection = max0(reflection - fog_scattering_previous);
-        reflection * analytic_fog[1] + analytic_fog[0];
+        reflection *= analytic_fog[1] + analytic_fog[0];
 #endif
 
         return mix(sky_reflection, reflection, border_attenuation);
