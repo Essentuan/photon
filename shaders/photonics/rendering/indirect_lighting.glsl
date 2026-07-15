@@ -118,9 +118,7 @@ void sample_indirect(
 
     for (int bounce = -1; bounce < PH_MAX_GI_BOUNCES; bounce++) {
         RayResult hit = ray_iter_next(ray);
-
-        // No hit & not out of bounds means we likely out of iterations
-        if (!ray_result_is_hit(hit) && ray_iter_is_in_bounds(ray)) break;
+        if (ray.iterations <= 0) return;
 
         vec3 hit_position = ray_result_position(hit);
         vec3 hit_normal = ray_result_normal(hit);
@@ -163,7 +161,9 @@ void sample_indirect(
             radiance_color = is_tracing_to_sun ? get_sun_color(player_pos, ray.direction) : get_sky_color(player_pos, ray.direction);
 
             if (bounce == -1) {
-                first_hit = vec3(0.0f/0.0f);
+                const float infinity = intBitsToFloat(0x7f800000);
+
+                first_hit = vec3(infinity);
                 first_normal = -ray.direction;
             }
         }
