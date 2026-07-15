@@ -38,7 +38,7 @@ void prepare_next_gi_ray(
         int bounce_count,
 
         vec3 rt_pos,
-        vec3 geo_normal,
+        vec3 normal,
         inout bool is_tracing_to_sun
 ) {
     ray_iter_set_direction(
@@ -47,7 +47,7 @@ void prepare_next_gi_ray(
                     rnd_state,
                     bounce_count,
                     rt_pos,
-                    geo_normal,
+                    normal,
                     is_tracing_to_sun
             )
     );
@@ -98,8 +98,7 @@ vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) 
 void sample_indirect(
         inout vec3 indirect_color,
         vec3 sample_rt_pos,
-        vec3 geo_normal,
-        vec3 tex_normal,
+        vec3 normal,
         inout uint rnd_state,
 
         out vec3 first_hit,
@@ -114,7 +113,7 @@ void sample_indirect(
 
     ray.iterations = PH_MAX_GI_ITERATIONS;
     ray_iter_set_position(ray, sample_rt_pos);
-    prepare_next_gi_ray(ray, rnd_state, -1, sample_rt_pos, geo_normal, is_tracing_to_sun);
+    prepare_next_gi_ray(ray, rnd_state, -1, sample_rt_pos, normal, is_tracing_to_sun);
 
     for (int bounce = -1; bounce < PH_MAX_GI_BOUNCES; bounce++) {
         RayResult hit = ray_iter_next(ray);
@@ -178,8 +177,8 @@ void sample_indirect(
 
         running_bounce_color *= albedo.rgb;
         sample_rt_pos = hit_position;
-        geo_normal = hit_normal;
+        normal = hit_normal;
 
-        prepare_next_gi_ray(ray, rnd_state, bounce, sample_rt_pos, geo_normal, is_tracing_to_sun);
+        prepare_next_gi_ray(ray, rnd_state, bounce, sample_rt_pos, normal, is_tracing_to_sun);
     }
 }
