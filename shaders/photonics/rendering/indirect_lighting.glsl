@@ -159,24 +159,24 @@ void sample_indirect(
             }
 #endif
         } else { // Hit sky
-            ray.iterations = 0;
-
             vec3 player_pos = hit_position - rt_camera_position;
             radiance_color = is_tracing_to_sun ? get_sun_color(player_pos, ray.direction) : get_sky_color(player_pos, ray.direction);
 
             if (bounce == -1) {
-                first_hit = vec3(-1.0f);
+                first_hit = vec3(0.0f/0.0f);
                 first_normal = -ray.direction;
             }
+
+            is_tracing_to_sun = true;
         }
 
         #define gi_tint_color (running_tint_color != vec4(0.0) ? running_tint_color.rgb : vec3(1.0f))
         #define gi_bounce_color running_bounce_color
         #define gi_intensity running_light_transmittance
 
-        indirect_color += radiance_color * gi_tint_color * gi_bounce_color * gi_intensity;\
+        indirect_color += radiance_color * gi_tint_color * gi_bounce_color * gi_intensity;
 
-        if (!ray_result_is_hit(hit)) break;
+        if (is_tracing_to_sun) return;
 
         running_bounce_color *= albedo.rgb;
         sample_rt_pos = hit_position;
