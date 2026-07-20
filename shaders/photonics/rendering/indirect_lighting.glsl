@@ -77,7 +77,7 @@ vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) 
 #endif
 
     Light hit_light = ray_result_light_data(hit);
-    return light_is_valid(hit_light) ? hit_light.color : vec3(0.0f);
+    return light_is_valid(hit_light) ? (hit_light.color * (bounce == -1 ? 1.0f : 0.33f)) : vec3(0.0f);
 }
 
 #elif PHOTONICS_RESTIR_DIRECT_MODE == 2
@@ -90,7 +90,7 @@ vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) 
     float emission = voxel_data_specular(voxel_data).a;
     emission = emission == 1.0f ? 0.0f : emission;
 
-    return albedo.rgb * emission * BLOCKLIGHT_I * 10.0f;
+    return albedo.rgb * emission * BLOCKLIGHT_I * (bounce == -1 ? 30.0f : 10.0f);
 }
 
 #endif
