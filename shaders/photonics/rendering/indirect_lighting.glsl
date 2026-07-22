@@ -55,6 +55,9 @@ void prepare_next_gi_ray(
     ray_iter_offset_position(ray, ray.direction * 0.03f);
 }
 
+#define should_apply_transparency(hit, albedo, rnd_state) \
+    (ray_result_is_transparent(hit) && ph_rand_next_float(rnd_state) > albedo.a)
+
 #if PHOTONICS_RESTIR_DIRECT_MODE == 0
 
 vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) {
@@ -77,7 +80,7 @@ vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) 
 #endif
 
     Light hit_light = ray_result_light_data(hit);
-    return light_is_valid(hit_light) ? (hit_light.color * (bounce == -1 ? 1.0f : 0.33f)) : vec3(0.0f);
+    return light_is_valid(hit_light) ? hit_light.color : vec3(0.0f);
 }
 
 #elif PHOTONICS_RESTIR_DIRECT_MODE == 2
@@ -90,7 +93,7 @@ vec3 sample_light(RayResult hit, vec4 albedo, VoxelData voxel_data, int bounce) 
     float emission = voxel_data_specular(voxel_data).a;
     emission = emission == 1.0f ? 0.0f : emission;
 
-    return albedo.rgb * emission * BLOCKLIGHT_I * (bounce == -1 ? 30.0f : 10.0f);
+    return albedo.rgb * emission * BLOCKLIGHT_I * 10.0f;
 }
 
 #endif
@@ -105,7 +108,6 @@ void sample_indirect(
         out vec3 first_normal
 ) {
     vec4 running_tint_color = vec4(0.0f);
-    float running_light_transmittance = 1.0f;
     vec3 running_bounce_color = vec3(1.0f);
     bool is_tracing_to_sun = false;
 
@@ -129,9 +131,8 @@ void sample_indirect(
             VoxelData voxel_data = ray_result_voxel_data(hit);
             albedo = voxel_data_albedo(voxel_data);
 
-            if (ray_result_is_transparent(hit)) {
+            if (should_apply_transparency(hit, albedo, rnd_state)) {
                 // Multiply alpha by 0.25 as it looks better with glass
-                running_light_transmittance *= 1.0f - (albedo.a * 0.25f);
                 ray_iter_apply_transparency(running_tint_color, albedo);
                 ray_iter_skip_block(ray);
 
@@ -144,7 +145,7 @@ void sample_indirect(
                 first_normal = hit_normal;
             }
 
-            radiance_color+= sample_light(hit, albedo, voxel_data, bounce);
+            radiance_color+= sample_light(hit, albedo, voxel_data, bounce) * (1.0f / albedo.a);
             is_tracing_to_sun = false;
 
 #if !defined NO_SHADOW_MAPPING
@@ -169,9 +170,8 @@ void sample_indirect(
 
         #define gi_tint_color (running_tint_color != vec4(0.0) ? running_tint_color.rgb : vec3(1.0f))
         #define gi_bounce_color running_bounce_color
-        #define gi_intensity running_light_transmittance
 
-        indirect_color += radiance_color * gi_tint_color * gi_bounce_color * gi_intensity;
+        indirect_color += radiance_color * gi_tint_color * gi_bounce_color;
 
         if (!ray_result_is_hit(hit)) return;
 
